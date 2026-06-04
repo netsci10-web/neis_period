@@ -73,10 +73,15 @@
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200 mb-8 grid grid-cols-1 md:grid-cols-2 gap-8">
             <!-- 1. 파일 업로드 영역 -->
             <div>
-                <h2 class="text-base font-bold text-gray-800 mb-3 flex items-center">
-                    <span class="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full inline-flex items-center justify-center text-xs mr-2">1</span>
-                    인사기록 파일 업로드
-                </h2>
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-base font-bold text-gray-800 flex items-center">
+                        <span class="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full inline-flex items-center justify-center text-xs mr-2">1</span>
+                        인사기록(임용발령(전체)) 파일 업로드
+                    </h2>
+                    <button onclick="openGuide()" class="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded text-xs font-bold transition flex items-center gap-1.5" title="파일 다운로드 방법 보기">
+                        <i class="fa-solid fa-circle-question"></i> 다운로드 방법
+                    </button>
+                </div>
                 <div class="flex items-center justify-center w-full">
                     <label id="drop-zone" for="file-upload" class="flex flex-col items-center justify-center w-full h-36 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-200 group relative">
                         <!-- pointer-events-none을 추가하여 드래그 중 자식 요소가 이벤트를 방해하는 현상 차단 -->
@@ -181,6 +186,42 @@
         </div>
     </div>
 
+    <!-- 파일 다운로드 안내 모달 -->
+    <div id="guide-modal" class="fixed inset-0 z-[100] flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onclick="closeGuide()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl z-10 w-full max-w-lg mx-4 overflow-hidden modal-enter flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="text-lg font-bold text-gray-900 flex items-center">
+                    <i class="fa-solid fa-download text-indigo-500 mr-2"></i> 파일 다운로드 방법
+                </h3>
+                <button onclick="closeGuide()" class="text-gray-400 hover:text-gray-600 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto bg-white">
+                <ol class="space-y-8 relative border-l-2 border-indigo-100 ml-3">
+                    <li class="pl-6 relative">
+                        <span class="absolute -left-[13px] bg-indigo-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ring-4 ring-white">1</span>
+                        <h4 class="font-bold text-gray-800 mb-2">임용발령(전체) 항목 출력</h4>
+                        <p class="text-[13px] text-gray-600 mb-3 leading-relaxed">나이스(NEIS) <strong>인사기록카드 출력</strong> 메뉴에서 여러 항목 중 <strong>'임용발령(전체)'</strong>만 체크하신 후 하단의 [출력] 버튼을 클릭하세요.</p>
+                        <div class="bg-gray-50 p-2 rounded-lg border border-gray-200">
+                            <img src="1.png" alt="임용발령 전체 선택" class="w-full rounded shadow-sm" onerror="this.src='https://placehold.co/400x300/f8fafc/64748b?text=1.png+Not+Found'">
+                        </div>
+                    </li>
+                    <li class="pl-6 relative">
+                        <span class="absolute -left-[13px] bg-indigo-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ring-4 ring-white">2</span>
+                        <h4 class="font-bold text-gray-800 mb-2">XLS 형식으로 저장</h4>
+                        <p class="text-[13px] text-gray-600 mb-3 leading-relaxed">미리보기 창이 열리면 좌측 상단의 <strong>저장(디스켓 아이콘)</strong>을 누르고 목록에서 <strong>'XLS'</strong>를 선택하여 파일을 다운로드합니다.</p>
+                        <div class="bg-gray-50 p-2 rounded-lg border border-gray-200 inline-block">
+                            <img src="2.png" alt="XLS 저장" class="w-24 rounded shadow-sm" onerror="this.src='https://placehold.co/150x300/f8fafc/64748b?text=2.png+Not+Found'">
+                        </div>
+                    </li>
+                </ol>
+            </div>
+            <div class="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+                <button onclick="closeGuide()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-xl transition shadow-sm">확인했습니다</button>
+            </div>
+        </div>
+    </div>
+
 <script>
 /**
  * ==========================================
@@ -211,6 +252,14 @@ function showAlert(message) {
 
 function closeAlert() {
     document.getElementById('custom-alert').classList.add('hidden');
+}
+
+function openGuide() {
+    document.getElementById('guide-modal').classList.remove('hidden');
+}
+
+function closeGuide() {
+    document.getElementById('guide-modal').classList.add('hidden');
 }
 
 /**
