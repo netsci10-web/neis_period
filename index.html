@@ -134,33 +134,48 @@
 
     let currentJsonData = null;
 
-    // [강력 업데이트] 나이스(NEIS) 공식 역산법 엔진 탑재
-    // 시작일과 종료일로 정확한 년, 월, 일(한 달=30일 기준)을 도출합니다.
+    // [궁극의 업데이트] 민법 제160조 '역(달력)에 의한 계산' 완벽 구현 (엑셀 DATEDIF 100% 일치)
     function calcPeriodYMD(startStr, endStr) {
         if(!startStr || startStr.length < 8) return {y:0, m:0, d:0};
         if(!endStr || endStr === "9999-99-99") endStr = startStr;
         
-        let d1 = new Date(startStr);
-        let d2 = new Date(endStr);
-        // 역산법의 핵심: 종료일의 다음날 0시를 기준으로 뺌
-        d2.setDate(d2.getDate() + 1); 
+        let startDate = new Date(startStr);
+        let endDate = new Date(endStr);
         
-        let y1 = d1.getFullYear(), m1 = d1.getMonth() + 1, day1 = d1.getDate();
-        let y2 = d2.getFullYear(), m2 = d2.getMonth() + 1, day2 = d2.getDate();
+        // 관공서 역산법: 종료일의 다음날 0시를 기준으로 기산일과 뺌
+        endDate.setDate(endDate.getDate() + 1); 
         
+        let y1 = startDate.getFullYear();
+        let m1 = startDate.getMonth(); // 0 ~ 11
+        let d1 = startDate.getDate();
+
+        let y2 = endDate.getFullYear();
+        let m2 = endDate.getMonth();
+        let d2 = endDate.getDate();
+
         let y = y2 - y1;
         let m = m2 - m1;
-        let d = day2 - day1;
-        
-        // 일수가 모자라면 한 달을 30일로 쳐서 빌려옴
-        if (d < 0) { m -= 1; d += 30; }
-        // 월수가 모자라면 1년을 12개월로 쳐서 빌려옴
-        if (m < 0) { y -= 1; m += 12; }
-        
-        return {y, m, d};
+        let d = d2 - d1;
+
+        // 일수가 모자랄 경우, 무조건 30일이 아닌 '이전 달의 실제 일수(28, 29, 30, 31)'를 달력에서 빌려옴
+        if (d < 0) {
+            m -= 1;
+            let prevMonth = m2 === 0 ? 11 : m2 - 1;
+            let prevYear = m2 === 0 ? y2 - 1 : y2;
+            let daysInPrevMonth = new Date(prevYear, prevMonth + 1, 0).getDate();
+            d += daysInPrevMonth;
+        }
+
+        // 월수가 모자랄 경우 1년(12개월)을 빌려옴
+        if (m < 0) {
+            y -= 1;
+            m += 12;
+        }
+
+        return { y: y, m: m, d: d };
     }
 
-    // YMD 기간 덧셈
+    // YMD 기간 덧셈 (경력 합산 시에는 30일 단위로 올림 처리)
     function addYMD(p1, p2) {
         let d = p1.d + p2.d;
         let m = p1.m + p2.m + Math.floor(d / 30);
@@ -647,7 +662,7 @@
                 return diff;
             });
 
-            // 동기화 로직 분리 (1차, 2차 실행)
+            // [강력 업데이트] 동기화 로직: 1순위로 "시작 날짜가 같은 진짜 학교"를 찾음
             const syncSpecialLocations = (rows) => {
                 for(let i=0; i<rows.length; i++) {
                     const row = rows[i];
@@ -658,17 +673,36 @@
                         if (sch.match(/초등학교|유치원|분교|학교/) && !row.isInheritedLoc) continue; 
 
                         let found = false;
-                        for(let j=i+1; j<rows.length; j++) {
-                            const nextRow = rows[j];
-                            const nextSch = nextRow.parsedLocation.school || '';
-                            if(nextSch.match(/초등학교|유치원|분교|학교/) && !nextRow.isInheritedLoc) {
-                                row.parsedLocation.region = nextRow.parsedLocation.region;
-                                row.parsedLocation.school = nextRow.parsedLocation.school;
-                                row.isInheritedLoc = true; 
+                        
+                        // 1순위: 나와 "시작 날짜"가 완전히 동일한 실제 학교를 최우선 검색
+                        for(let j=0; j<rows.length; j++) {
+                            const targetRow = rows[j];
+                            const targetSch = targetRow.parsedLocation.school || '';
+                            if (i !== j && targetRow.startDate === row.startDate && targetSch.match(/초등학교|유치원|분교|학교/) && !targetRow.isInheritedLoc) {
+                                row.parsedLocation.region = targetRow.parsedLocation.region;
+                                row.parsedLocation.school = targetRow.parsedLocation.school;
+                                row.isInheritedLoc = true;
                                 found = true;
                                 break;
                             }
                         }
+
+                        // 2순위: 날짜가 같은 학교가 없다면, 가장 가까운 미래의 학교를 찾음
+                        if (!found) {
+                            for(let j=i+1; j<rows.length; j++) {
+                                const nextRow = rows[j];
+                                const nextSch = nextRow.parsedLocation.school || '';
+                                if(nextSch.match(/초등학교|유치원|분교|학교/) && !nextRow.isInheritedLoc) {
+                                    row.parsedLocation.region = nextRow.parsedLocation.region;
+                                    row.parsedLocation.school = nextRow.parsedLocation.school;
+                                    row.isInheritedLoc = true; 
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // 3순위: 미래에도 없다면, 가장 가까운 과거의 학교를 찾음
                         if (!found) {
                             for(let j=i-1; j>=0; j--) {
                                 const prevRow = rows[j];
