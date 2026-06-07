@@ -952,12 +952,23 @@
                     if (vRecs.length === 0) return;
 
                     let bStart = "9999-99-99", bEnd = "0000-00-00";
+                    
+                    // 1. 일반 발령 기록으로 전체 기간 찾기
                     vRecs.forEach(r => {
                         if(!r.isNewHireMarker && !r.isInterOffice) { 
                             if (r.startDate < bStart) bStart = r.startDate;
                             if (r.endDate > bEnd) bEnd = r.endDate;
                         }
                     });
+
+                    // 2. [강력 업데이트] 일반 기록이 없어 '기록 없음'이 뜰 위기라면, 신규채용/기점의 날짜를 강제로 끌어옴
+                    if (bStart === "9999-99-99") {
+                        vRecs.forEach(r => {
+                            if (r.startDate < bStart) bStart = r.startDate;
+                            if (r.endDate > bEnd) bEnd = r.endDate;
+                        });
+                    }
+
                     if (bStart === "9999-99-99") { bStart = "기록 없음"; bEnd = "기록 없음"; }
 
                     const bWorkRecs = block.records.filter(r => (r.category === 'WORK' || r.category === 'MARKER') && !(r.startDate === r.endDate && (r.isNewHireMarker || r.isInterOffice)));
