@@ -242,31 +242,49 @@
         return 'WORK';
     }
 
+    // [강력 업데이트] 지역 및 학교 추출 알고리즘 전면 개편
     function extractRegionAndSchool(deptStr, authStr) {
         let str = (deptStr || '') + ' ' + (authStr || '');
         str = str.replace(/\s+/g, ' ');
         
         let region = "", school = "";
         
-        // 1. 기존 주요 지역 우선 검색 (창원 등 특수 분할 지역 보호)
-        const priorityRegions = ['창원교육청', '창원교육지원청', '마산교육청', '진해교육청', '의령교육청', '밀양교육청', '경상남도교육청'];
-        for (let r of priorityRegions) {
-            if (str.includes(r)) { region = r; break; }
-        }
+        let dept = (deptStr || '').replace(/\s+/g, '');
+        let auth = (authStr || '').replace(/\s+/g, '');
         
-        // 2. [강력 업데이트] 목록에 없는 타 지역 교육청 자동 인식 (예: 거제교육청, 진주교육지원청 등)
-        if (!region) {
-            let regionMatch = str.match(/([가-힣]+교육지원청|[가-힣]+교육청)/);
+        // 1. 발령청(도교육청 등)보다 실제 근무하는 부서명(dept)에 적힌 교육지원청을 최우선으로 추출합니다.
+        let regionMatch = dept.match(/([가-힣]+교육지원청|[가-힣]+교육청)/);
+        if (regionMatch) {
+            region = regionMatch[1];
+        } else {
+            // 부서에 없으면 발령청에서 추출
+            regionMatch = auth.match(/([가-힣]+교육지원청|[가-힣]+교육청)/);
             if (regionMatch) {
                 region = regionMatch[1];
             }
         }
-        
-        // 3. 학교 및 부서명 추출
-        let match = str.match(/([가-힣]+(초등학교|유치원|분교장|학교|학무과|교육과|지원국))/);
+
+        // 2. 본청(도/시교육청)인지 판별 (발령청 때문에 덮어씌워진 경우 방지용)
+        let isProvincial = false;
+        if (region && region.match(/경상남도교육청|경상북도교육청|경기도교육청|전라남도교육청|전라북도교육청|충청남도교육청|충청북도교육청|강원도교육청|제주특별자치도교육청|서울특별시교육청|부산광역시교육청|대구광역시교육청|인천광역시교육청|광주광역시교육청|대전광역시교육청|울산광역시교육청|세종특별자치시교육청/)) {
+            isProvincial = true;
+        }
+
+        // 3. 도/광역시 명칭 깔끔하게 제거 (본청이 아닐 경우에만 적용. 예: 경상남도사천교육지원청 -> 사천교육지원청)
+        if (region && !isProvincial) {
+            region = region.replace(/경상남도|경상북도|경기도|전라남도|전라북도|충청남도|충청북도|강원도|제주특별자치도|서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시/g, '');
+        }
+
+        // 4. 학교 및 부서명 추출
+        let match = str.match(/([가-힣]+(초등학교|유치원|분교장|학교|학무과|교육과|지원국|연수원|연구원|수련원|기획부))/);
         if (match) school = match[1];
 
-        // 나이스 API 처리를 위해 비워둠 (기존처럼 무조건 여기서 기타지역으로 묶지 않음)
+        // 5. [핵심] 발령청(권한자) 때문에 본청(도교육청)으로 잘못 잡혔으나, 실제로는 일반 학교 근무인 경우!
+        // 이 경우 지역을 비워서 하단 로직의 나이스 API가 진짜 관할 지역교육청을 찾아오도록 강제로 유도합니다.
+        if (isProvincial && school && school.match(/초등학교|유치원|분교|학교/)) {
+            region = ""; 
+        }
+
         return { region, school };
     }
 
@@ -291,6 +309,11 @@
     function handleFile(file) {
         document.getElementById('fileName').innerText = file.name;
         document.getElementById('userInfo').classList.add('hidden');
+        
+        // 새 파일 업로드 시 기존 분석 결과 화면 완전히 숨기기 및 초기화
+        document.getElementById('resultContainer').classList.add('hidden');
+        document.getElementById('resultContainer').innerHTML = '';
+        
         currentJsonData = null;
 
         const reader = new FileReader();
@@ -361,12 +384,11 @@
                     }
                 }
 
-                // [강력 업데이트] 대상자 성명 추출 (1D 평탄화 스캐너 + 파일명 백업)
+                // 대상자 성명 추출 (1D 평탄화 스캐너 + 파일명 백업)
                 let name = "성명 미상";
                 let nameFound = false;
                 
                 // 1. 평탄화(Flatten) 기반 텍스트 스캔
-                // 표가 쪼개져 있든 병합되어 있든, 순서대로 글자만 쏙쏙 뽑아서 1차원 배열로 만듭니다.
                 let flatTexts = [];
                 for (let i = 0; i < Math.min(rawDataArray.length, 15); i++) {
                     for (let j = 0; j < rawDataArray[i].length; j++) {
@@ -383,12 +405,10 @@
                     
                     // 성명 추출
                     if (!nameFound && cellNoSpace.includes('성명')) {
-                        // 1-A. 같은 셀 안에 이름이 붙어있는 경우
                         let inline = cellNoSpace.replace(/성명(?:한글|한자|영문)?[:：\|]?/g, '').replace(/\([^)]*\)/g, '').replace(/[^\uAC00-\uD7A3]/g, '');
                         if (inline.length >= 2 && inline.length <= 5 && !/주민|번호|생년|기록/.test(inline)) {
                             name = inline; nameFound = true;
                         } else {
-                            // 1-B. "성명" 다음 칸들에 진짜 이름이 있는 경우 (최대 3칸까지만 확인)
                             for (let next = 1; next <= 3 && (idx + next) < flatTexts.length; next++) {
                                 let nextCellClean = flatTexts[idx + next].replace(/성명|한글|한자|영문/g, '').replace(/\([^)]*\)/g, '').replace(/[^\uAC00-\uD7A3]/g, '');
                                 if (nextCellClean.length >= 2 && nextCellClean.length <= 5 && !/주민|번호|생년|사진|성별|기록|인사/.test(nextCellClean)) {
@@ -398,7 +418,7 @@
                         }
                     }
 
-                    // 생년월일(주민등록번호) 추출
+                    // 생년월일 추출
                     if (!birthDate && (cellNoSpace.includes('생년월일') || cellNoSpace.includes('주민번호') || cellNoSpace.includes('주민등록번호'))) {
                         let inlineMatch = cellNoSpace.match(/(\d{2,4})[./-]?(\d{2})[./-]?(\d{2})/);
                         if (inlineMatch && inlineMatch[0].length >= 6) {
@@ -424,7 +444,6 @@
                             for (let next = 1; next <= 3 && (idx + next) < flatTexts.length; next++) {
                                 let nextText = flatTexts[idx + next].replace(/\s+/g, '');
                                 let nextMatch = nextText.match(/(\d+)(?:호봉)?/);
-                                // 숫자가 존재하고 일반적인 교원 호봉 범위(1~50) 내에 있는지 확인
                                 if (nextMatch && parseInt(nextMatch[1]) > 0 && parseInt(nextMatch[1]) <= 50) {
                                     payGrade = nextMatch[1] + "호봉";
                                     break;
@@ -434,10 +453,9 @@
                     }
                 }
 
-                // 2. 파일명에서 이름 추출 (최강의 안전장치)
-                // 업로드된 파일 이름이 "정정숙.xlsx" 와 같이 이름으로 되어 있는 경우를 완벽하게 잡아냅니다.
+                // 2. 파일명 백업 추출
                 if (!nameFound || name === "성명 미상") {
-                    let fileNameClean = file.name.replace(/\.[^/.]+$/, ""); // 확장자 제거
+                    let fileNameClean = file.name.replace(/\.[^/.]+$/, ""); 
                     fileNameClean = fileNameClean.replace(/인사기록|임용발령|전체|카드|다운로드|복사본|[\d\s_\-\(\)\[\]]/g, '');
                     let match = fileNameClean.match(/^[가-힣]{2,5}$/);
                     if (match && !/주민|번호|성명/.test(match[0])) {
@@ -532,14 +550,13 @@
                 })
                 .filter(row => row.startDate && row.startDate.length >= 8 && !row.typeRaw.includes('보직교사') && !row.typeRaw.includes('분교장발령'));
 
-            // [강력 업데이트] 나이스 API 연동 (교육청 누락 학교 탐색)
+            // 나이스 API 연동 (교육청 누락 학교 탐색)
             let schoolRegionCache = {};
             for(let row of validRows) {
                 let loc = row.parsedLocation;
                 // 교육청 정보가 없고 학교명이 있는 경우에만 API 호출
                 if(!loc.region && loc.school && loc.school.match(/초등학교|유치원|분교|학교/)) {
                     let searchName = loc.school;
-                    // 병설유치원은 검색이 안되므로 초등학교로 변경하여 검색
                     if (searchName.includes('유치원')) {
                         searchName = searchName.replace(/병설유치원|유치원/g, '초등학교');
                     }
@@ -549,26 +566,24 @@
                     } else {
                         try {
                             const controller = new AbortController();
-                            const timeoutId = setTimeout(() => controller.abort(), 3000); // 3초 타임아웃
+                            const timeoutId = setTimeout(() => controller.abort(), 3000); 
                             let res = await fetch(`https://open.neis.go.kr/hub/schoolInfo?Type=json&pIndex=1&pSize=1&SCHUL_NM=${encodeURIComponent(searchName)}`, { signal: controller.signal });
                             clearTimeout(timeoutId);
                             
                             let data = await res.json();
                             if(data.schoolInfo && data.schoolInfo[1].row && data.schoolInfo[1].row.length > 0) {
                                 let orgNm = data.schoolInfo[1].row[0].JU_ORG_NM || data.schoolInfo[1].row[0].ATPT_OFCDC_SC_NM; 
-                                // 지역명칭 깔끔하게 정리 (예: 경상남도창원교육지원청 -> 창원교육지원청)
                                 orgNm = orgNm.replace(/경상남도|경상북도|경기도|전라남도|전라북도|충청남도|충청북도|강원도|제주특별자치도|서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시/g, '');
                                 loc.region = orgNm;
                                 schoolRegionCache[searchName] = orgNm;
                             } else {
-                                schoolRegionCache[searchName] = '기타지역'; // 검색 실패시
+                                schoolRegionCache[searchName] = '기타지역'; 
                             }
                         } catch(e) {
-                            schoolRegionCache[searchName] = '기타지역'; // 통신 에러시
+                            schoolRegionCache[searchName] = '기타지역'; 
                         }
                     }
                 }
-                // API로도 못 찾았거나 애초에 학교명이 없는 경우 기타지역 할당
                 if (!loc.region) loc.region = '기타지역';
             }
 
@@ -632,7 +647,7 @@
                 return diff;
             });
 
-            // [수정] 동기화 로직을 재사용 가능한 함수로 분리 (1차, 2차 두 번 실행하기 위함)
+            // 동기화 로직 분리 (1차, 2차 실행)
             const syncSpecialLocations = (rows) => {
                 for(let i=0; i<rows.length; i++) {
                     const row = rows[i];
@@ -640,23 +655,20 @@
                     
                     if(isSpecial) {
                         const sch = row.parsedLocation.school || '';
-                        // 이미 확실한 소속이 있고 상속받은 것이 아니라면 건너뜀
                         if (sch.match(/초등학교|유치원|분교|학교/) && !row.isInheritedLoc) continue; 
 
                         let found = false;
-                        // 1. 미래의 발령 기록을 찾아 복귀할 학교를 찾음
                         for(let j=i+1; j<rows.length; j++) {
                             const nextRow = rows[j];
                             const nextSch = nextRow.parsedLocation.school || '';
                             if(nextSch.match(/초등학교|유치원|분교|학교/) && !nextRow.isInheritedLoc) {
                                 row.parsedLocation.region = nextRow.parsedLocation.region;
                                 row.parsedLocation.school = nextRow.parsedLocation.school;
-                                row.isInheritedLoc = true; // 상속받았다는 꼬리표 부착
+                                row.isInheritedLoc = true; 
                                 found = true;
                                 break;
                             }
                         }
-                        // 2. 과거의 발령 기록 찾기
                         if (!found) {
                             for(let j=i-1; j>=0; j--) {
                                 const prevRow = rows[j];
@@ -673,10 +685,10 @@
                 }
             };
 
-            // [1차 동기화] (기본 소속 파악)
+            // 1차 동기화
             syncSpecialLocations(validRows);
 
-            // [강력 업데이트] 학교별 마산/진해 소속 기억하기 (창원교육지원청으로 퉁쳐져서 구분이 안 되는 학교 구출용)
+            // 학교별 마산/진해 소속 기억하기
             let schoolSubRegionMap = {};
             validRows.forEach(row => {
                 const rLoc = row.parsedLocation.region || '';
@@ -693,16 +705,15 @@
                 }
             });
 
-            // [강력 업데이트] 창원/마산/진해 2010.07.01 통합/분할 및 명칭 완벽 보정 로직
+            // 창원/마산/진해 통합 및 분할 로직
             let splitRows = [];
             validRows.forEach(row => {
                 const rLoc = row.parsedLocation.region || '';
                 const dRaw = row.deptRaw || '';
                 const aRaw = row.authRaw || '';
-                const sLoc = row.parsedLocation.school || ''; // 1차 동기화된 학교명 확인
+                const sLoc = row.parsedLocation.school || ''; 
                 
                 let isChangwonArea = false;
-                // 창원, 마산, 진해 소속인지 다각도로 정밀 판별
                 if (rLoc.match(/창원|마산|진해/) && rLoc.includes('교육')) {
                     isChangwonArea = true;
                 } else if ((dRaw.includes('창원') || dRaw.includes('마산') || dRaw.includes('진해')) && 
@@ -712,14 +723,12 @@
                     isChangwonArea = true;
                 }
 
-                // 예외 처리: 본청(경상남도교육청) 근무인 경우 제외
                 if (rLoc === '경상남도교육청' && !dRaw.includes('창원') && !dRaw.includes('마산') && !dRaw.includes('진해')) {
                     isChangwonArea = false;
                 }
 
                 if (isChangwonArea) {
                     let subRegion = "창원";
-                    // 1차 상속 데이터 및 과거 학교 소속(schoolSubRegionMap)을 모두 동원하여 마산/진해 판별
                     if (dRaw.includes('마산') || aRaw.includes('마산') || rLoc.includes('마산') || sLoc.includes('마산') || schoolSubRegionMap[sLoc] === '마산') {
                         subRegion = "마산";
                     } else if (dRaw.includes('진해') || aRaw.includes('진해') || rLoc.includes('진해') || sLoc.includes('진해') || schoolSubRegionMap[sLoc] === '진해') {
@@ -727,7 +736,6 @@
                     }
 
                     if (row.startDate < "2010-07-01" && row.endDate >= "2010-07-01") {
-                        // 2010.07.01 관통 시 쪼개기
                         let r1 = JSON.parse(JSON.stringify(row));
                         r1.endDate = "2010-06-30";
                         r1.parsedLocation.region = subRegion + "교육청";
@@ -738,11 +746,9 @@
                         r2.parsedLocation.region = `창원교육지원청(${subRegion})`;
                         splitRows.push(r2);
                     } else if (row.startDate >= "2010-07-01") {
-                        // 2010.07.01 이후 데이터 명칭 강제 통일
                         row.parsedLocation.region = `창원교육지원청(${subRegion})`;
                         splitRows.push(row);
                     } else {
-                        // 2010.07.01 이전 데이터 명칭 강제 통일
                         row.parsedLocation.region = subRegion + "교육청";
                         splitRows.push(row);
                     }
@@ -770,7 +776,7 @@
                 return diff;
             });
 
-            // [2차 동기화] (분할로 완벽해진 지역명을 기점과 파견이 다시 한번 정확하게 훔쳐옴)
+            // 2차 동기화
             syncSpecialLocations(validRows);
 
             // 직급(지역) 구간 자동 분류
@@ -798,7 +804,7 @@
                 row.phaseId = currentPhase.id;
             });
 
-            // 역순 정렬 (과거가 아래로, 기점은 맨 아래로)
+            // 역순 정렬
             validRows.sort((a, b) => {
                 let diff = new Date(b.startDate) - new Date(a.startDate);
                 if(diff === 0) {
@@ -814,7 +820,7 @@
                 return diff;
             });
 
-            // 블록 단위 생성 (Set 달력 대신 배열로만 보관)
+            // 블록 단위 생성
             let currentBlock = null;
             validRows.forEach(row => {
                 let schoolContext = row.parsedLocation.school || row.deptRaw || '소속 불명';
@@ -838,7 +844,7 @@
             let globalTotalYMD = {y:0, m:0, d:0};
             let resultHtml = '';
             
-            // 전체 지역(Phase) 순서도 가장 최근이 맨 위로 오도록 역순 정렬
+            // 전체 지역(Phase) 순서도 역순 정렬
             phases.reverse();
             
             // UI 렌더링
@@ -920,7 +926,6 @@
                     });
                     if (bStart === "9999-99-99") { bStart = "기록 없음"; bEnd = "기록 없음"; }
 
-                    // 개별 학교(블록) 역산법 YMD 계산
                     const bWorkRecs = block.records.filter(r => (r.category === 'WORK' || r.category === 'MARKER') && !(r.startDate === r.endDate && (r.isNewHireMarker || r.isInterOffice)));
                     const bExcRecs = block.records.filter(r => r.category === 'EXCLUSION');
                     
@@ -960,7 +965,6 @@
                     `;
 
                     vRecs.forEach(rec => {
-                        // 특수 기점(Marker) 렌더링
                         if (rec.isNewHireMarker || rec.isInterOffice) {
                             let iconClass = rec.isNewHireMarker ? "fa-seedling text-emerald-400" : "fa-flag text-blue-400";
                             let badgeClass = rec.isNewHireMarker ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-blue-50 text-blue-700 border-blue-200";
@@ -994,7 +998,6 @@
                             return; 
                         }
 
-                        // 일반 발령 렌더링
                         let badge = "bg-gray-100 text-gray-700", text = "text-gray-800", icon = "fa-check text-gray-400", isExc = false;
                         if (rec.category === 'MARKER') { badge = "bg-orange-50 text-orange-600 border-orange-200"; icon = "fa-briefcase text-orange-400"; }
                         if (rec.category === 'EXCLUSION') { badge = "bg-red-50 text-red-600 border-red-200"; text = "text-red-600 line-through opacity-70"; icon = "fa-ban text-red-400"; isExc = true; }
