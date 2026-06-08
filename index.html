@@ -253,11 +253,12 @@
         if (t.includes('복직') || t.includes('파견복귀')) return 'HIDDEN_WORK';
         
         if (t.includes('휴직') || t.includes('정직') || t.includes('직위해제') || t.includes('파견')) return 'EXCLUSION';
-        if (t.includes('전보') || t.includes('명칭변경') || t.includes('신규채용') || t.includes('채용')) return 'MARKER';
+        // [강력 업데이트] '전입', '전출' 키워드를 추가하여 시도간 이동도 기점(Marker)으로 완벽 취급
+        if (t.includes('전보') || t.includes('명칭변경') || t.includes('신규채용') || t.includes('채용') || t.includes('전입') || t.includes('전출')) return 'MARKER';
         return 'WORK';
     }
 
-    // [강력 업데이트] 지역 및 학교 추출 알고리즘 전면 개편
+    // 지역 및 학교 추출 알고리즘 전면 개편
     function extractRegionAndSchool(deptStr, authStr) {
         let str = (deptStr || '') + ' ' + (authStr || '');
         str = str.replace(/\s+/g, ' ');
@@ -282,12 +283,16 @@
         // 2. 본청(도/시교육청)인지 판별 (발령청 때문에 덮어씌워진 경우 방지용)
         let isProvincial = false;
         if (region && region.match(/경상남도교육청|경상북도교육청|경기도교육청|전라남도교육청|전라북도교육청|충청남도교육청|충청북도교육청|강원도교육청|제주특별자치도교육청|서울특별시교육청|부산광역시교육청|대구광역시교육청|인천광역시교육청|광주광역시교육청|대전광역시교육청|울산광역시교육청|세종특별자치시교육청/)) {
-            isProvincial = true;
+            // 진짜 본청인지, 아니면 '경상남도교육청 창녕교육지원청'처럼 섞여있는 건지 부서명(dept)으로 재확인
+            if (!dept.includes('지원청') && !dept.match(/창원|마산|진해|밀양|사천|거제|통영|김해|양산|의령|함안|창녕|고성|남해|하동|산청|함양|거창|합천/)) {
+                isProvincial = true;
+            }
         }
 
-        // 3. 도/광역시 명칭 깔끔하게 제거 (본청이 아닐 경우에만 적용. 예: 경상남도사천교육지원청 -> 사천교육지원청)
+        // 3. [강력 업데이트] 도/광역시 명칭 완벽 제거 (경상남도교육청창녕교육지원청 -> 창녕교육지원청)
         if (region && !isProvincial) {
-            region = region.replace(/경상남도|경상북도|경기도|전라남도|전라북도|충청남도|충청북도|강원도|제주특별자치도|서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시/g, '');
+            // '도/광역시' 이름 뒤에 붙은 '교육청' 글자까지 한 번에 날려버림
+            region = region.replace(/(경상남도|경상북도|경기도|전라남도|전라북도|충청남도|충청북도|강원도|제주특별자치도|서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시)(교육청)?/g, '');
         }
 
         // 4. 학교 및 부서명 추출
@@ -626,7 +631,8 @@
                 if (t.includes('채용') || t.includes('공채')) {
                     row.isNewHireMarker = true; 
                 }
-                if (t.match(/교육청간|부처간|교육청내|부처내/)) {
+                // [업데이트] 시도간 '전입', '전출' 도 부서 기점(isInterOffice)으로 흡수시켜 단독 블록 생성을 막음
+                if (t.match(/교육청간|부처간|교육청내|부처내|전입|전출/)) {
                     if (!row.parsedLocation.school || 
                         row.parsedLocation.school.includes('학무과') || 
                         row.parsedLocation.school.includes('교육과') || 
