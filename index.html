@@ -570,38 +570,104 @@
                 })
                 .filter(row => row.startDate && row.startDate.length >= 8 && !row.typeRaw.includes('보직교사') && !row.typeRaw.includes('분교장발령'));
 
-            // 나이스 API 연동 (교육청 누락 학교 탐색)
+            // [초강력 업데이트] 나이스 API 연동 (교육청 누락 탐색 + 창원/마산/진해 주소 기반 정밀 구분)
             let schoolRegionCache = {};
+            let schoolSubRegionMap = {}; // API와 로컬 스캔을 결합하여 완벽한 마산/진해 지도를 만듭니다.
+
+            // 1차 로컬 스캔: 엑셀 데이터 자체의 키워드로 마산/진해 소속 선행 기억
+            validRows.forEach(row => {
+                const rLoc = row.parsedLocation.region || '';
+                const dRaw = row.deptRaw || '';
+                const aRaw = row.authRaw || '';
+                const sLoc = row.parsedLocation.school || '';
+
+                if(sLoc && sLoc.match(/초등학교|유치원|분교|학교/)) {
+                    if (dRaw.includes('마산') || aRaw.includes('마산') || rLoc.includes('마산') || sLoc.includes('마산')) {
+                        schoolSubRegionMap[sLoc] = '마산';
+                    } else if (dRaw.includes('진해') || aRaw.includes('진해') || rLoc.includes('진해') || sLoc.includes('진해')) {
+                        schoolSubRegionMap[sLoc] = '진해';
+                    }
+                }
+            });
+
             for(let row of validRows) {
                 let loc = row.parsedLocation;
-                // 교육청 정보가 없고 학교명이 있는 경우에만 API 호출
-                if(!loc.region && loc.school && loc.school.match(/초등학교|유치원|분교|학교/)) {
-                    let searchName = loc.school;
+                let sLoc = loc.school || '';
+                let rLoc = loc.region || '';
+                
+                let needsRegionApi = !rLoc && sLoc.match(/초등학교|유치원|분교|학교/);
+                
+                // 창원 소속인데 마산/진해 판별이 아직 안 된 학교들 (예: 가고파초등학교)
+                let isChangwonArea = (rLoc.includes('창원') || row.deptRaw.includes('창원')) && sLoc.match(/초등학교|유치원|분교|학교/);
+                let needsSubRegionApi = isChangwonArea && !schoolSubRegionMap[sLoc];
+
+                if (needsRegionApi || needsSubRegionApi) {
+                    let searchName = sLoc;
                     if (searchName.includes('유치원')) {
                         searchName = searchName.replace(/병설유치원|유치원/g, '초등학교');
                     }
 
                     if(schoolRegionCache[searchName]) {
-                        loc.region = schoolRegionCache[searchName];
-                    } else {
-                        try {
-                            const controller = new AbortController();
-                            const timeoutId = setTimeout(() => controller.abort(), 3000); 
-                            let res = await fetch(`https://open.neis.go.kr/hub/schoolInfo?Type=json&pIndex=1&pSize=1&SCHUL_NM=${encodeURIComponent(searchName)}`, { signal: controller.signal });
-                            clearTimeout(timeoutId);
+                        if(needsRegionApi) loc.region = schoolRegionCache[searchName];
+                        continue; 
+                    }
+
+                    try {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 3000); 
+                        // [수정] 동명이교 탐색을 위해 pSize를 5로 증가시켜 여러 결과를 가져옵니다.
+                        let res = await fetch(`https://open.neis.go.kr/hub/schoolInfo?Type=json&pIndex=1&pSize=5&SCHUL_NM=${encodeURIComponent(searchName)}`, { signal: controller.signal });
+                        clearTimeout(timeoutId);
+                        
+                        let data = await res.json();
+                        if(data.schoolInfo && data.schoolInfo[1].row && data.schoolInfo[1].row.length > 0) {
+                            let rows = data.schoolInfo[1].row;
+                            let rowData = rows[0]; // 기본 첫번째 결과
                             
-                            let data = await res.json();
-                            if(data.schoolInfo && data.schoolInfo[1].row && data.schoolInfo[1].row.length > 0) {
-                                let orgNm = data.schoolInfo[1].row[0].JU_ORG_NM || data.schoolInfo[1].row[0].ATPT_OFCDC_SC_NM; 
-                                orgNm = orgNm.replace(/경상남도|경상북도|경기도|전라남도|전라북도|충청남도|충청북도|강원도|제주특별자치도|서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시/g, '');
-                                loc.region = orgNm;
-                                schoolRegionCache[searchName] = orgNm;
-                            } else {
-                                schoolRegionCache[searchName] = '기타지역'; 
+                            // [강력 업데이트] 동명이교(예: 경기 오산, 울산 등) 방지 및 경상남도 소속 학교 우선 탐색
+                            for(let r of rows) {
+                                if (r.ATPT_OFCDC_SC_NM && r.ATPT_OFCDC_SC_NM.includes('경상남도')) {
+                                    rowData = r; break;
+                                }
                             }
-                        } catch(e) {
-                            schoolRegionCache[searchName] = '기타지역'; 
+
+                            let orgNm = rowData.JU_ORG_NM || rowData.ATPT_OFCDC_SC_NM; 
+                            const provRegex = /(경상남도|경상북도|경기도|전라남도|전라북도|전북특별자치도|충청남도|충청북도|강원도|강원특별자치도|제주특별자치도|서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시)/g;
+                            
+                            // 교육청 자체인 경우(예: 울산광역시교육청)는 자르지 않음
+                            if (orgNm !== rowData.ATPT_OFCDC_SC_NM || rowData.JU_ORG_NM) {
+                                let strippedOrgNm = orgNm.replace(provRegex, '').replace(/^교육청/, '');
+                                
+                                // 나이스 API에서 가져온 이름도 강북/동부 등은 시/도 명칭 스마트 복원
+                                if (strippedOrgNm.match(/^(강남|강북|동부|서부|남부|북부|중부|성북|성동|동래|해운대|강서|강동)/)) {
+                                    let provMatch = (rowData.ATPT_OFCDC_SC_NM || "").match(provRegex);
+                                    if (provMatch) {
+                                        orgNm = provMatch[0] + strippedOrgNm;
+                                    } else {
+                                        orgNm = strippedOrgNm;
+                                    }
+                                } else {
+                                    orgNm = strippedOrgNm;
+                                }
+                            }
+                            
+                            schoolRegionCache[searchName] = orgNm;
+                            if(needsRegionApi) loc.region = orgNm;
+
+                            // [핵심] 주소(ORG_RDNMA)로 마산(합포구/회원구), 진해(진해구) 완벽 판별
+                            let address = rowData.ORG_RDNMA || rowData.ORG_RDNDA || "";
+                            if (address.includes('마산합포구') || address.includes('마산회원구') || address.includes('마산시')) {
+                                schoolSubRegionMap[sLoc] = '마산';
+                            } else if (address.includes('진해구') || address.includes('진해시')) {
+                                schoolSubRegionMap[sLoc] = '진해';
+                            } else if (address.includes('의창구') || address.includes('성산구') || address.includes('창원시')) {
+                                schoolSubRegionMap[sLoc] = '창원';
+                            }
+                        } else {
+                            if(needsRegionApi) schoolRegionCache[searchName] = '기타지역'; 
                         }
+                    } catch(e) {
+                        if(needsRegionApi) schoolRegionCache[searchName] = '기타지역'; 
                     }
                 }
                 if (!loc.region) loc.region = '기타지역';
@@ -728,22 +794,7 @@
             // 1차 동기화
             syncSpecialLocations(validRows);
 
-            // 학교별 마산/진해 소속 기억하기
-            let schoolSubRegionMap = {};
-            validRows.forEach(row => {
-                const rLoc = row.parsedLocation.region || '';
-                const dRaw = row.deptRaw || '';
-                const aRaw = row.authRaw || '';
-                const sLoc = row.parsedLocation.school || '';
-
-                if(sLoc && sLoc.match(/초등학교|유치원|분교|학교/)) {
-                    if (dRaw.includes('마산') || aRaw.includes('마산') || rLoc.includes('마산') || sLoc.includes('마산')) {
-                        schoolSubRegionMap[sLoc] = '마산';
-                    } else if (dRaw.includes('진해') || aRaw.includes('진해') || rLoc.includes('진해') || sLoc.includes('진해')) {
-                        schoolSubRegionMap[sLoc] = '진해';
-                    }
-                }
-            });
+            // (학교별 마산/진해 소속 기억 로직은 상단 API 연동부로 통합/이동됨)
 
             // 창원/마산/진해 통합 및 분할 로직
             let splitRows = [];
