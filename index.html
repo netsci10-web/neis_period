@@ -164,6 +164,11 @@
             let prevYear = m2 === 0 ? y2 - 1 : y2;
             let daysInPrevMonth = new Date(prevYear, prevMonth + 1, 0).getDate();
             d += daysInPrevMonth;
+            
+            // [핵심 버그 수정] 달력에서 빌려왔는데도 음수라면 (예: 30일 시작 -> 28일 끝)
+            // 관공서법상 '1개월'이 꽉 찬 것으로 간주하여 0일로 보정합니다.
+            // 이 처리가 없으면 '-1일'이 되어 전체 계산에서 '+1일'이 튀어나오는 나비효과가 발생합니다.
+            if (d < 0) d = 0;
         }
 
         // 월수가 모자랄 경우 1년(12개월)을 빌려옴
@@ -869,6 +874,52 @@
 
             // 2차 동기화
             syncSpecialLocations(validRows);
+
+            // [궁극의 업데이트] 명시적 종료일이 없는 발령들의 근무 기간(endDate) 스마트 할당
+            // 2차 동기화까지 끝나 소속 학교가 완벽해진 상태(과거->미래 정렬)에서 다음 이동일을 찾아줍니다.
+            validRows.forEach((row, i) => {
+                if (!row.hasExplicitEndDate) {
+                    // 실제 근무(WORK), 휴직/파견(EXCLUSION), 학교로 배치된 전보(MARKER)
+                    if ((row.category === 'WORK' || row.category === 'EXCLUSION' || row.category === 'MARKER') && !row.isNewHireMarker && !row.isInterOffice) {
+                        let nextEventRow = null;
+                        
+                        // 내 이후(미래) 기록 중 종료 시점을 알려주는 발령 찾기
+                        for (let j = i + 1; j < validRows.length; j++) {
+                            let nextRow = validRows[j];
+                            
+                            // 1. 내가 휴직이나 파견 중일 때, '복직'이나 '파견복귀'를 만나면
+                            if ((row.category === 'EXCLUSION' || row.typeRaw.includes('휴직') || row.typeRaw.includes('파견')) && 
+                                (nextRow.typeRaw.includes('복직') || nextRow.typeRaw.includes('파견복귀'))) {
+                                nextEventRow = nextRow;
+                                break;
+                            }
+
+                            // 2. 다른 학교로 떠나는 발령을 만나면
+                            if ((nextRow.category === 'WORK' || nextRow.category === 'MARKER') && 
+                                !nextRow.isNewHireMarker && !nextRow.isInterOffice &&
+                                nextRow.parsedLocation.school !== row.parsedLocation.school) {
+                                nextEventRow = nextRow;
+                                break;
+                            }
+                        }
+
+                        if (nextEventRow) {
+                            // 복직이나 다른 학교 발령일의 '전날'까지를 종료일로 설정
+                            let d = new Date(nextEventRow.startDate);
+                            d.setDate(d.getDate() - 1);
+                            let endStr = d.toISOString().split('T')[0];
+                            // 혹시 시작일보다 앞서게 되는 경우 당일로 보정
+                            row.endDate = (endStr < row.startDate) ? row.startDate : endStr;
+                        } else {
+                            // 다음 기록이 없다면 현재 상태 진행 중이므로 '기준일'까지 꽉 채워 연장
+                            row.endDate = refDateStr;
+                        }
+                    } else {
+                        // 순수 기점(Marker)들은 당일 하루짜리로 둠
+                        row.endDate = row.startDate;
+                    }
+                }
+            });
 
             // 직급(지역) 구간 자동 분류
             let phases = [];
