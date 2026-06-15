@@ -19,7 +19,6 @@
 <body class="text-slate-800">
 
     <div class="max-w-4xl mx-auto p-4 sm:p-8">
-        
         <!-- Header -->
         <header class="mb-8 text-center cursor-pointer" onclick="location.reload()">
             <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 mb-2 flex items-center justify-center">
@@ -34,7 +33,6 @@
         <!-- Main Controls -->
         <div class="glass-panel rounded-3xl p-6 sm:p-8 mb-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
                 <!-- File Upload -->
                 <div>
                     <div class="flex justify-between items-center mb-2">
@@ -59,14 +57,12 @@
                         <label class="block text-sm font-bold text-slate-700 mb-2">기준일 설정</label>
                         <input type="date" id="refDate" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-3.5 shadow-sm transition-shadow">
                     </div>
-                    
                     <button id="calcBtn" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm px-5 py-4 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
                         <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>실근무경력 분석하기
                     </button>
                 </div>
             </div>
             
-            <!-- User Info (Hidden by default) -->
             <div id="userInfo" class="hidden mt-6 pt-6 border-t border-slate-100 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 border border-slate-200">
@@ -86,101 +82,65 @@
             <p class="text-slate-500 font-medium animate-pulse">데이터를 정밀 분석 중입니다...</p>
         </div>
 
-        <!-- Timeline Container -->
         <div id="resultContainer" class="hidden space-y-8"></div>
     </div>
 
-    <!-- Error Modal -->
-    <div id="errorModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity">
-        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl transform transition-all">
-            <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
+    <!-- Modals -->
+    <div id="errorModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl">
+            <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4"><i class="fa-solid fa-triangle-exclamation"></i></div>
             <h3 class="text-lg font-bold text-center text-slate-900 mb-2">안내사항</h3>
             <p id="errorMessage" class="text-sm text-slate-600 text-center mb-6 whitespace-pre-line leading-relaxed"></p>
-            <button onclick="document.getElementById('errorModal').classList.add('hidden')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl py-3 transition-colors">
-                확인
-            </button>
+            <button onclick="document.getElementById('errorModal').classList.add('hidden')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl py-3 transition-colors">확인</button>
         </div>
     </div>
 
-    <!-- Guide Modal -->
-    <div id="guideModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity">
-        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div id="guideModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-download mr-2 text-indigo-500"></i>인사기록 다운로드 방법</h3>
-                <button onclick="document.getElementById('guideModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
-                    <i class="fa-solid fa-xmark text-xl"></i>
-                </button>
+                <button onclick="document.getElementById('guideModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <div class="overflow-y-auto hide-scroll flex-1 p-2 space-y-6">
                 <div class="bg-indigo-50 rounded-xl p-4">
                     <p class="text-sm text-indigo-800 font-medium">1. 나이스(NEIS) 인사기록카드 출력 메뉴에서 <strong class="font-bold">임용발령(전체)</strong>를 체크하고 [출력]을 누릅니다.</p>
-                    <img src="1.png" alt="가이드1" class="mt-3 rounded-lg border border-indigo-100 w-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <p class="hidden text-xs text-slate-400 mt-2 text-center bg-white p-2 rounded">※ 1.png 이미지를 찾을 수 없습니다.</p>
                 </div>
                 <div class="bg-indigo-50 rounded-xl p-4">
                     <p class="text-sm text-indigo-800 font-medium">2. 출력 미리보기 창 상단의 저장 버튼을 눌러 <strong class="font-bold">XLS</strong> 형식으로 저장합니다.</p>
-                    <img src="2.png" alt="가이드2" class="mt-3 rounded-lg border border-indigo-100 w-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <p class="hidden text-xs text-slate-400 mt-2 text-center bg-white p-2 rounded">※ 2.png 이미지를 찾을 수 없습니다.</p>
                 </div>
             </div>
         </div>
     </div>
 
 <script>
-    // 오늘 날짜로 초기화
     document.getElementById('refDate').value = new Date().toISOString().split('T')[0];
-
     let currentJsonData = null;
 
-    // [궁극의 업데이트] 민법 제160조 '역(달력)에 의한 계산' 완벽 구현 (엑셀 DATEDIF 100% 일치)
+    // [핵심 1] 완벽한 관공서 역산법 (DATEDIF 100% 동기화)
     function calcPeriodYMD(startStr, endStr) {
         if(!startStr || startStr.length < 8) return {y:0, m:0, d:0};
         if(!endStr || endStr === "9999-99-99") endStr = startStr;
         
         let startDate = new Date(startStr);
         let endDate = new Date(endStr);
-        
-        // 관공서 역산법: 종료일의 다음날 0시를 기준으로 기산일과 뺌
         endDate.setDate(endDate.getDate() + 1); 
         
-        let y1 = startDate.getFullYear();
-        let m1 = startDate.getMonth(); // 0 ~ 11
-        let d1 = startDate.getDate();
+        let y = endDate.getFullYear() - startDate.getFullYear();
+        let m = endDate.getMonth() - startDate.getMonth();
+        let d = endDate.getDate() - startDate.getDate();
 
-        let y2 = endDate.getFullYear();
-        let m2 = endDate.getMonth();
-        let d2 = endDate.getDate();
-
-        let y = y2 - y1;
-        let m = m2 - m1;
-        let d = d2 - d1;
-
-        // 일수가 모자랄 경우, 무조건 30일이 아닌 '이전 달의 실제 일수(28, 29, 30, 31)'를 달력에서 빌려옴
         if (d < 0) {
             m -= 1;
-            let prevMonth = m2 === 0 ? 11 : m2 - 1;
-            let prevYear = m2 === 0 ? y2 - 1 : y2;
+            let prevMonth = endDate.getMonth() === 0 ? 11 : endDate.getMonth() - 1;
+            let prevYear = endDate.getMonth() === 0 ? endDate.getFullYear() - 1 : endDate.getFullYear();
             let daysInPrevMonth = new Date(prevYear, prevMonth + 1, 0).getDate();
             d += daysInPrevMonth;
-            
-            // [핵심 버그 수정] 달력에서 빌려왔는데도 음수라면 (예: 30일 시작 -> 28일 끝)
-            // 관공서법상 '1개월'이 꽉 찬 것으로 간주하여 0일로 보정합니다.
-            // 이 처리가 없으면 '-1일'이 되어 전체 계산에서 '+1일'이 튀어나오는 나비효과가 발생합니다.
-            if (d < 0) d = 0;
+            if (d < 0) d = 0; // 나비효과 방어막
         }
-
-        // 월수가 모자랄 경우 1년(12개월)을 빌려옴
-        if (m < 0) {
-            y -= 1;
-            m += 12;
-        }
-
+        if (m < 0) { y -= 1; m += 12; }
         return { y: y, m: m, d: d };
     }
 
-    // YMD 기간 덧셈 (경력 합산 시에는 30일 단위로 올림 처리)
     function addYMD(p1, p2) {
         let d = p1.d + p2.d;
         let m = p1.m + p2.m + Math.floor(d / 30);
@@ -190,19 +150,16 @@
         return {y, m, d};
     }
 
-    // YMD 기간 뺄셈 (휴직 등 차감 시)
     function subYMD(p1, p2) {
         let d = p1.d - p2.d;
         let m = p1.m - p2.m;
         let y = p1.y - p2.y;
-        
         if (d < 0) { m -= 1; d += 30; }
         if (m < 0) { y -= 1; m += 12; }
-        if (y < 0) return {y:0, m:0, d:0}; // 음수 방지
+        if (y < 0) return {y:0, m:0, d:0}; 
         return {y, m, d};
     }
 
-    // 기간을 예쁜 문자열로 포맷팅
     function formatYMDObj(period) {
         if (period.y === 0 && period.m === 0 && period.d === 0) return "0일";
         let res = [];
@@ -212,23 +169,18 @@
         return res.join(' ');
     }
 
-    // 환산 일수 (참고용)
     function periodToDays(p) { return p.y * 365 + p.m * 30 + p.d; }
 
-    // 겹치는 기간 병합(Merge) 알고리즘
     function mergePeriods(records) {
         if(records.length === 0) return [];
         let periods = records.map(r => ({start: new Date(r.startDate), end: new Date(r.endDate)}));
         periods.sort((a,b) => a.start - b.start);
-        
         let merged = [periods[0]];
         for(let i=1; i<periods.length; i++) {
             let last = merged[merged.length-1];
             let curr = periods[i];
-            
             let lastEndNextDay = new Date(last.end);
             lastEndNextDay.setDate(lastEndNextDay.getDate() + 1);
-            
             if (curr.start <= lastEndNextDay) {
                 if (curr.end > last.end) last.end = curr.end;
             } else {
@@ -241,7 +193,6 @@
         }));
     }
 
-    // 병합된 기간들의 YMD 총합 계산
     function getPeriodFromMerged(mergedPeriods) {
         let total = {y:0, m:0, d:0};
         mergedPeriods.forEach(p => {
@@ -254,62 +205,52 @@
         if (!typeStr) return 'WORK';
         const t = typeStr.replace(/\s+/g, '');
         if (t.includes('휴직') && t.includes('10호')) return 'WORK';
-        
         if (t.includes('복직') || t.includes('파견복귀')) return 'HIDDEN_WORK';
-        
         if (t.includes('휴직') || t.includes('정직') || t.includes('직위해제') || t.includes('파견')) return 'EXCLUSION';
-        // [강력 업데이트] '전입', '전출' 키워드를 추가하여 시도간 이동도 기점(Marker)으로 완벽 취급
-        if (t.includes('전보') || t.includes('명칭변경') || t.includes('신규채용') || t.includes('채용') || t.includes('전입') || t.includes('전출')) return 'MARKER';
+        if (t.match(/전보|명칭변경|신규채용|채용|전입|전출/)) return 'MARKER';
         return 'WORK';
     }
 
-    // 지역 및 학교 추출 알고리즘 전면 개편
+    // [정선됨] 지역 및 방위 명칭 추출 로직
     function extractRegionAndSchool(deptStr, authStr) {
         let str = (deptStr || '') + ' ' + (authStr || '');
         str = str.replace(/\s+/g, ' ');
-        
         let region = "", school = "";
-        
         let dept = (deptStr || '').replace(/\s+/g, '');
         let auth = (authStr || '').replace(/\s+/g, '');
         
-        // 1. 발령청(도교육청 등)보다 실제 근무하는 부서명(dept)에 적힌 교육지원청을 최우선으로 추출합니다.
         let regionMatch = dept.match(/([가-힣]+교육지원청|[가-힣]+교육청)/);
-        if (regionMatch) {
-            region = regionMatch[1];
-        } else {
-            // 부서에 없으면 발령청에서 추출
+        if (regionMatch) region = regionMatch[1];
+        else {
             regionMatch = auth.match(/([가-힣]+교육지원청|[가-힣]+교육청)/);
-            if (regionMatch) {
-                region = regionMatch[1];
-            }
+            if (regionMatch) region = regionMatch[1];
         }
 
-        // 2. 본청(도/시교육청)인지 판별 (발령청 때문에 덮어씌워진 경우 방지용)
         let isProvincial = false;
         if (region && region.match(/경상남도교육청|경상북도교육청|경기도교육청|전라남도교육청|전라북도교육청|충청남도교육청|충청북도교육청|강원도교육청|제주특별자치도교육청|서울특별시교육청|부산광역시교육청|대구광역시교육청|인천광역시교육청|광주광역시교육청|대전광역시교육청|울산광역시교육청|세종특별자치시교육청/)) {
-            // 진짜 본청인지, 아니면 '경상남도교육청 창녕교육지원청'처럼 섞여있는 건지 부서명(dept)으로 재확인
             if (!dept.includes('지원청') && !dept.match(/창원|마산|진해|밀양|사천|거제|통영|김해|양산|의령|함안|창녕|고성|남해|하동|산청|함양|거창|합천/)) {
                 isProvincial = true;
             }
         }
 
-        // 3. [강력 업데이트] 도/광역시 명칭 완벽 제거 (경상남도교육청창녕교육지원청 -> 창녕교육지원청)
         if (region && !isProvincial) {
-            // '도/광역시' 이름 뒤에 붙은 '교육청' 글자까지 한 번에 날려버림
-            region = region.replace(/(경상남도|경상북도|경기도|전라남도|전라북도|충청남도|충청북도|강원도|제주특별자치도|서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시)(교육청)?/g, '');
+            const provRegex = /(경상남도|경상북도|경기도|전라남도|전라북도|전북특별자치도|충청남도|충청북도|강원도|강원특별자치도|제주특별자치도|서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시)/g;
+            let strippedRegion = region.replace(provRegex, '').replace(/^교육청/, '');
+            
+            // 시/도 방위 명칭 스마트 복원
+            if (strippedRegion.match(/^(강남|강북|동부|서부|남부|북부|중부|성북|성동|동래|해운대|강서|강동)/)) {
+                let provMatch = region.match(provRegex);
+                if (provMatch) region = provMatch[0] + strippedRegion; 
+                else region = strippedRegion;
+            } else {
+                region = strippedRegion;
+            }
         }
 
-        // 4. 학교 및 부서명 추출
         let match = str.match(/([가-힣]+(초등학교|유치원|분교장|학교|학무과|교육과|지원국|연수원|연구원|수련원|기획부))/);
         if (match) school = match[1];
 
-        // 5. [핵심] 발령청(권한자) 때문에 본청(도교육청)으로 잘못 잡혔으나, 실제로는 일반 학교 근무인 경우!
-        // 이 경우 지역을 비워서 하단 로직의 나이스 API가 진짜 관할 지역교육청을 찾아오도록 강제로 유도합니다.
-        if (isProvincial && school && school.match(/초등학교|유치원|분교|학교/)) {
-            region = ""; 
-        }
-
+        if (isProvincial && school && school.match(/초등학교|유치원|분교|학교/)) region = ""; 
         return { region, school };
     }
 
@@ -334,39 +275,27 @@
     function handleFile(file) {
         document.getElementById('fileName').innerText = file.name;
         document.getElementById('userInfo').classList.add('hidden');
-        
-        // 새 파일 업로드 시 기존 분석 결과 화면 완전히 숨기기 및 초기화
         document.getElementById('resultContainer').classList.add('hidden');
         document.getElementById('resultContainer').innerHTML = '';
-        
         currentJsonData = null;
 
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
-                // 바이너리 데이터로 읽어오기
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                
-                // 표가 첫 줄에 없을 경우를 대비하여 배열 형태로 전체 로드 (헤더 찾기 용도)
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rawDataArray = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
 
-                // 헤더(머리글)가 있는 행 번호 찾기 (최대 30줄 스캔)
                 let headerRowIndex = -1;
                 for (let i = 0; i < Math.min(rawDataArray.length, 30); i++) {
                     if (rawDataArray[i].some(cell => typeof cell === 'string' && (cell.replace(/\s+/g, '').includes('임용구분') || cell.replace(/\s+/g, '').includes('발령구분')))) {
-                        headerRowIndex = i;
-                        break;
+                        headerRowIndex = i; break;
                     }
                 }
 
-                if (headerRowIndex === -1) {
-                    throw new Error("파일 형식 오류: '임용구분' 또는 '발령구분' 열을 찾을 수 없습니다.\n나이스에서 [임용발령(전체)]를 체크하고 다운로드했는지 확인해주세요.");
-                }
+                if (headerRowIndex === -1) throw new Error("파일 형식 오류: '임용구분'을 찾을 수 없습니다.");
 
-                // 찾은 헤더행을 기준으로 객체(JSON) 데이터 재구성
                 const headers = rawDataArray[headerRowIndex].map(h => String(h || '').trim());
                 const jsonRows = [];
                 for (let i = headerRowIndex + 1; i < rawDataArray.length; i++) {
@@ -390,7 +319,6 @@
                 const keyPosition = findKey(['직위', '직급', '직위(급)', '직급(직위)']);
                 const keyDept = findKey(['부서', '소속']);
 
-                // 교장, 교감 검사 (분교장 등 예외 처리)
                 const isPrincipal = (str) => {
                     if (!str) return false;
                     if (str.includes('교장') && !str.includes('분교장') && !str.includes('학교장')) return true;
@@ -399,21 +327,13 @@
                 };
 
                 for (let i = 0; i < jsonRows.length; i++) {
-                    const row = jsonRows[i];
-                    const typeRawStr = String(row[keyType] || '').replace(/\s+/g, '');
-                    const posRawStr = keyPosition ? String(row[keyPosition] || '').replace(/\s+/g, '') : '';
-                    const deptRawStr = String(row[keyDept] || '').replace(/\s+/g, '');
-
-                    if (isPrincipal(typeRawStr) || isPrincipal(posRawStr) || isPrincipal(deptRawStr)) {
-                        throw new Error("본 프로그램은 초등교사용 입니다.\n초등교사의 경력을 넣어주세요.\n(교장이나 교감 기록은 분석이 불가합니다)");
+                    if (isPrincipal(String(jsonRows[i][keyType] || '')) || isPrincipal(String(keyPosition ? jsonRows[i][keyPosition] || '' : '')) || isPrincipal(String(jsonRows[i][keyDept] || ''))) {
+                        throw new Error("본 프로그램은 초등교사용 입니다. (교장/교감 분석 불가)");
                     }
                 }
 
-                // 대상자 성명 추출 (1D 평탄화 스캐너 + 파일명 백업)
-                let name = "성명 미상";
-                let nameFound = false;
-                
-                // 1. 평탄화(Flatten) 기반 텍스트 스캔
+                // 성명, 출생, 호봉 추출
+                let name = "성명 미상", nameFound = false, birthDate = "", payGrade = "";
                 let flatTexts = [];
                 for (let i = 0; i < Math.min(rawDataArray.length, 15); i++) {
                     for (let j = 0; j < rawDataArray[i].length; j++) {
@@ -422,79 +342,47 @@
                     }
                 }
 
-                let birthDate = "";
-                let payGrade = "";
-
                 for (let idx = 0; idx < flatTexts.length; idx++) {
                     let cellNoSpace = flatTexts[idx].replace(/\s+/g, '');
-                    
-                    // 성명 추출
                     if (!nameFound && cellNoSpace.includes('성명')) {
                         let inline = cellNoSpace.replace(/성명(?:한글|한자|영문)?[:：\|]?/g, '').replace(/\([^)]*\)/g, '').replace(/[^\uAC00-\uD7A3]/g, '');
-                        if (inline.length >= 2 && inline.length <= 5 && !/주민|번호|생년|기록/.test(inline)) {
-                            name = inline; nameFound = true;
-                        } else {
+                        if (inline.length >= 2 && inline.length <= 5 && !/주민|번호|생년|기록/.test(inline)) { name = inline; nameFound = true; }
+                        else {
                             for (let next = 1; next <= 3 && (idx + next) < flatTexts.length; next++) {
                                 let nextCellClean = flatTexts[idx + next].replace(/성명|한글|한자|영문/g, '').replace(/\([^)]*\)/g, '').replace(/[^\uAC00-\uD7A3]/g, '');
-                                if (nextCellClean.length >= 2 && nextCellClean.length <= 5 && !/주민|번호|생년|사진|성별|기록|인사/.test(nextCellClean)) {
-                                    name = nextCellClean; nameFound = true; break;
-                                }
+                                if (nextCellClean.length >= 2 && nextCellClean.length <= 5 && !/주민|번호|생년|사진|성별|기록|인사/.test(nextCellClean)) { name = nextCellClean; nameFound = true; break; }
                             }
                         }
                     }
-
-                    // 생년월일 추출
-                    if (!birthDate && (cellNoSpace.includes('생년월일') || cellNoSpace.includes('주민번호') || cellNoSpace.includes('주민등록번호'))) {
+                    if (!birthDate && (cellNoSpace.includes('생년월일') || cellNoSpace.includes('주민번호'))) {
                         let inlineMatch = cellNoSpace.match(/(\d{2,4})[./-]?(\d{2})[./-]?(\d{2})/);
-                        if (inlineMatch && inlineMatch[0].length >= 6) {
-                            birthDate = inlineMatch[1].slice(-2) + "." + inlineMatch[2] + "." + inlineMatch[3];
-                        } else {
+                        if (inlineMatch && inlineMatch[0].length >= 6) birthDate = inlineMatch[1].slice(-2) + "." + inlineMatch[2] + "." + inlineMatch[3];
+                        else {
                             for (let next = 1; next <= 3 && (idx + next) < flatTexts.length; next++) {
-                                let nextText = flatTexts[idx + next].replace(/\s+/g, '');
-                                let nextMatch = nextText.match(/(\d{2,4})[./-]?(\d{2})[./-]?(\d{2})/);
-                                if (nextMatch && nextMatch[0].length >= 6) {
-                                    birthDate = nextMatch[1].slice(-2) + "." + nextMatch[2] + "." + nextMatch[3];
-                                    break;
-                                }
+                                let nextMatch = flatTexts[idx + next].replace(/\s+/g, '').match(/(\d{2,4})[./-]?(\d{2})[./-]?(\d{2})/);
+                                if (nextMatch && nextMatch[0].length >= 6) { birthDate = nextMatch[1].slice(-2) + "." + nextMatch[2] + "." + nextMatch[3]; break; }
                             }
                         }
                     }
-
-                    // 호봉 추출
                     if (!payGrade && cellNoSpace.includes('호봉')) {
                         let inlineMatch = cellNoSpace.match(/(\d+)호봉/);
-                        if (inlineMatch) {
-                            payGrade = inlineMatch[1] + "호봉";
-                        } else {
+                        if (inlineMatch) payGrade = inlineMatch[1] + "호봉";
+                        else {
                             for (let next = 1; next <= 3 && (idx + next) < flatTexts.length; next++) {
-                                let nextText = flatTexts[idx + next].replace(/\s+/g, '');
-                                let nextMatch = nextText.match(/(\d+)(?:호봉)?/);
-                                if (nextMatch && parseInt(nextMatch[1]) > 0 && parseInt(nextMatch[1]) <= 50) {
-                                    payGrade = nextMatch[1] + "호봉";
-                                    break;
-                                }
+                                let nextMatch = flatTexts[idx + next].replace(/\s+/g, '').match(/(\d+)(?:호봉)?/);
+                                if (nextMatch && parseInt(nextMatch[1]) > 0 && parseInt(nextMatch[1]) <= 50) { payGrade = nextMatch[1] + "호봉"; break; }
                             }
                         }
                     }
                 }
 
-                // 2. 파일명 백업 추출
                 if (!nameFound || name === "성명 미상") {
-                    let fileNameClean = file.name.replace(/\.[^/.]+$/, ""); 
-                    fileNameClean = fileNameClean.replace(/인사기록|임용발령|전체|카드|다운로드|복사본|[\d\s_\-\(\)\[\]]/g, '');
-                    let match = fileNameClean.match(/^[가-힣]{2,5}$/);
-                    if (match && !/주민|번호|성명/.test(match[0])) {
-                        name = match[0];
-                        nameFound = true;
-                    }
+                    let match = file.name.replace(/\.[^/.]+$/, "").replace(/인사기록|임용발령|전체|카드|다운로드|복사본|[\d\s_\-\(\)\[\]]/g, '').match(/^[가-힣]{2,5}$/);
+                    if (match && !/주민|번호|성명/.test(match[0])) { name = match[0]; nameFound = true; }
                 }
 
-                if (!name) name = "성명 미상";
-
-                let extraInfo = [];
-                if (birthDate) extraInfo.push(birthDate);
-                if (payGrade) extraInfo.push(payGrade);
-                let extraStr = extraInfo.length > 0 ? ` <span class="text-xs font-normal text-slate-500 ml-2 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200 shadow-sm">${extraInfo.join(' / ')}</span>` : '';
+                let extraStr = [birthDate, payGrade].filter(Boolean).join(' / ');
+                if (extraStr) extraStr = ` <span class="text-xs font-normal text-slate-500 ml-2 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200 shadow-sm">${extraStr}</span>`;
 
                 currentJsonData = jsonRows;
                 document.getElementById('userName').innerHTML = name + extraStr;
@@ -509,18 +397,78 @@
         reader.readAsArrayBuffer(file);
     }
 
-    // 메인 계산 로직
     document.getElementById('calcBtn').addEventListener('click', () => {
-        if (!currentJsonData) { showError("먼저 인사기록 엑셀 파일을 업로드해주세요."); return; }
+        if (!currentJsonData) { showError("먼저 엑셀 파일을 업로드해주세요."); return; }
         const refDateStr = document.getElementById('refDate').value;
         if (!refDateStr) { showError("기준일을 설정해주세요."); return; }
-
         document.getElementById('loading').classList.remove('hidden');
         document.getElementById('resultContainer').classList.add('hidden');
         document.getElementById('resultContainer').innerHTML = '';
-
         setTimeout(async () => { await processData(currentJsonData, refDateStr); }, 100);
     });
+
+    // 동기화 공통 로직 모듈화 (정선됨)
+    const syncSpecialLocations = (rows) => {
+        for(let i=0; i<rows.length; i++) {
+            const row = rows[i];
+            const isSpecial = row.isPhaseChanger || row.category === 'EXCLUSION' || row.category === 'HIDDEN_WORK' || row.typeRaw.includes('파견') || row.typeRaw.includes('휴직') || row.category === 'MARKER';
+            
+            if(isSpecial) {
+                const sch = row.parsedLocation.school || '';
+                if (sch.match(/초등학교|유치원|분교|학교/) && !row.isInheritedLoc) continue; 
+
+                let found = false;
+                
+                // [선생님 핵심 규칙] 0순위: 시작 날짜가 "정확히" 일치하는 학교를 최우선 탐색!
+                // 과거 학교의 종료일과 전보 발령일이 하루 겹쳐서 과거 학교로 빨려 들어가는 현상을 완벽 차단합니다.
+                for(let j=0; j<rows.length; j++) {
+                    if (i !== j && (rows[j].parsedLocation.school||'').match(/초등학교|유치원|분교|학교/)) {
+                        if (rows[j].startDate === row.startDate) {
+                            row.parsedLocation.region = rows[j].parsedLocation.region;
+                            row.parsedLocation.school = rows[j].parsedLocation.school;
+                            row.isInheritedLoc = true;
+                            found = true; break;
+                        }
+                    }
+                }
+
+                // 1순위: 마커 발령일이 해당 학교의 근무 기간(시작일~종료일) 안에 완전히 포함되는 경우
+                if (!found) {
+                    for(let j=0; j<rows.length; j++) {
+                        if (i !== j && (rows[j].parsedLocation.school||'').match(/초등학교|유치원|분교|학교/)) {
+                            if (rows[j].startDate <= row.startDate && row.startDate <= rows[j].endDate) {
+                                row.parsedLocation.region = rows[j].parsedLocation.region;
+                                row.parsedLocation.school = rows[j].parsedLocation.school;
+                                row.isInheritedLoc = true;
+                                found = true; break;
+                            }
+                        }
+                    }
+                }
+
+                // 2순위: 미래
+                if (!found) {
+                    for(let j=i+1; j<rows.length; j++) {
+                        if((rows[j].parsedLocation.school||'').match(/초등학교|유치원|분교|학교/) && !rows[j].isInheritedLoc) {
+                            row.parsedLocation.region = rows[j].parsedLocation.region;
+                            row.parsedLocation.school = rows[j].parsedLocation.school;
+                            row.isInheritedLoc = true; found = true; break;
+                        }
+                    }
+                }
+                // 3순위: 과거 (새출발 마커는 탐색 금지)
+                if (!found && !row.isPhaseChanger) {
+                    for(let j=i-1; j>=0; j--) {
+                        if((rows[j].parsedLocation.school||'').match(/초등학교|유치원|분교|학교/) && !rows[j].isInheritedLoc) {
+                            row.parsedLocation.region = rows[j].parsedLocation.region;
+                            row.parsedLocation.school = rows[j].parsedLocation.school;
+                            row.isInheritedLoc = true; break;
+                        }
+                    }
+                }
+            }
+        }
+    };
 
     async function processData(rawData, refDateStr) {
         try {
@@ -534,35 +482,32 @@
             const keyDept = findKey(['부서', '소속']);
             const keyAuth = findKey(['발령청', '임용권자']);
 
-            if (!keyType || (!keyPeriod && !keyStart)) { throw new Error("필수 열(임용구분, 기간)을 찾을 수 없습니다."); }
+            if (!keyType || (!keyPeriod && !keyStart)) throw new Error("필수 열을 찾을 수 없습니다.");
 
+            // 1. 기초 파싱 및 시스템 플래그 세팅
             let validRows = rawData
                 .filter(row => row[keyPeriod] || row[keyStart])
                 .map(row => {
-                    let start = "", end = "";
-                    let hasExplicitEndDate = false; 
-
+                    let start = "", end = ""; let hasExplicitEndDate = false; 
                     if (keyPeriod && row[keyPeriod]) {
                         const parts = row[keyPeriod].toString().trim().split('~');
                         start = parts[0] ? parts[0].trim() : "";
-                        if (parts.length > 1 && parts[1].trim() !== "") {
-                            end = parts[1].trim();
-                            hasExplicitEndDate = true;
-                        }
+                        if (parts.length > 1 && parts[1].trim() !== "") { end = parts[1].trim(); hasExplicitEndDate = true; }
                     } else if (keyStart && row[keyStart]) {
                         start = row[keyStart];
-                        if (keyEnd && row[keyEnd] && row[keyEnd].toString().trim() !== "") {
-                            end = row[keyEnd];
-                            hasExplicitEndDate = true;
-                        }
+                        if (keyEnd && row[keyEnd] && row[keyEnd].toString().trim() !== "") { end = row[keyEnd]; hasExplicitEndDate = true; }
                     }
                     
                     if(typeof start === 'number') start = new Date(Math.round((start - 25569)*86400*1000)).toISOString().split('T')[0];
                     if(typeof end === 'number') end = new Date(Math.round((end - 25569)*86400*1000)).toISOString().split('T')[0];
                     if (typeof start === 'string') start = start.replace(/[\.\/]/g, '-').substring(0, 10).trim();
                     if (typeof end === 'string') end = end.replace(/[\.\/]/g, '-').substring(0, 10).trim();
-
                     if (!hasExplicitEndDate) end = start;
+
+                    const t = String(row[keyType] || '').replace(/\s+/g, '');
+                    let isNewHireMarker = t.includes('채용') || t.includes('공채');
+                    let isInterOffice = t.match(/교육청간|부처간|전입|전출/) ? true : false;
+                    let isPhaseChanger = isNewHireMarker || isInterOffice;
 
                     return {
                         typeRaw: row[keyType] || '미상',
@@ -571,277 +516,257 @@
                         hasExplicitEndDate: hasExplicitEndDate,
                         deptRaw: row[keyDept] || '', authRaw: row[keyAuth] || '',
                         parsedLocation: extractRegionAndSchool(row[keyDept], row[keyAuth]),
+                        isNewHireMarker: isNewHireMarker,
+                        isInterOffice: isInterOffice,
+                        isPhaseChanger: isPhaseChanger
                     };
                 })
                 .filter(row => row.startDate && row.startDate.length >= 8 && !row.typeRaw.includes('보직교사') && !row.typeRaw.includes('분교장발령'));
 
-            // [초강력 업데이트] 나이스 API 연동 (교육청 누락 탐색 + 창원/마산/진해 주소 기반 정밀 구분)
-            let schoolRegionCache = {};
-            let schoolSubRegionMap = {}; // API와 로컬 스캔을 결합하여 완벽한 마산/진해 지도를 만듭니다.
+            // 1차 정렬 (과거순)
+            validRows.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
-            // 1차 로컬 스캔: 엑셀 데이터 자체의 키워드로 마산/진해 소속 선행 기억
+            // [선생님 특별 요청] 첨부해주신 지도를 바탕으로 '창원', '마산', '진해' 소속 학교들을 영구적으로 강제 배정하는 절대 사전(Dictionary) 완결판!
+            const HARDCODED_SCHOOLS = {
+                // 진해 강제 배정 (지도 기준)
+                '진해중앙초': '진해', '경화초': '진해', '장복초': '진해', '석동초': '진해',
+                '대야초': '진해', '동부초': '진해', '진해냉천초': '진해', '도천초': '진해',
+                '제황초': '진해', '덕산초': '진해', '자은초': '진해', '진해남산초': '진해',
+                '풍호초': '진해', '장천초': '진해', '웅천초': '진해', '웅동초': '진해',
+                '안골포초': '진해', '안청초': '진해', '용원초': '진해', '진해신항초': '진해',
+                
+                // 마산 강제 배정 (지도 기준)
+                '교동초': '마산', '팔룡초': '마산', '가고파초': '마산', '가포초': '마산', '감천초': '마산', 
+                '광려초': '마산', '교방초': '마산', '구산초': '마산', '구서분교': '마산', '구암초': '마산', 
+                '내서초': '마산', '마산고운초': '마산', '마산신월초': '마산', '마산중앙초': '마산', '무학초': '마산', 
+                '반동초': '마산', '봉덕초': '마산', '북성초': '마산', '산호초': '마산', '삼계초': '마산', 
+                '마산상남초': '마산', '상일초': '마산', '석전초': '마산', '성호초': '마산', '안계초': '마산', 
+                '양덕초': '마산', '완월초': '마산', '용마초': '마산', '우산초': '마산', '월성초': '마산', 
+                '월영초': '마산', '월포초': '마산', '전안초': '마산', '중리초': '마산', '진동초': '마산', 
+                '진전초': '마산', '하북초': '마산', '합성초': '마산', '합포초': '마산', '해운초': '마산', 
+                '현동초': '마산', '호계초': '마산', '회원초': '마산',
+                
+                // 창원(성산구/의창구) 강제 배정 (지도 기준)
+                '유목초': '창원', '반송초': '창원', '용호초': '창원', '용지초': '창원', '용남초': '창원', 
+                '토월초': '창원', '신월초': '창원', '창원상남초': '창원', '상남초': '창원', '사파초': '창원', 
+                '내동초': '창원', '외동초': '창원', '대원초': '창원', '동산초': '창원', '남정초': '창원', 
+                '웅남초': '창원', '남양초': '창원', '대방초': '창원', '안남초': '창원', '대암초': '창원', 
+                '창원남산초': '창원', '남산초': '창원', '성주초': '창원', '삼정자초': '창원', '안민초': '창원', '양곡초': '창원',
+                '하천초': '창원', '온천초': '창원', '무동초': '창원', '북면초': '창원', '감계초': '창원', 
+                '봉강초': '창원', '일동초': '창원', '대산초': '창원', '우암초': '창원', '신등초': '창원', 
+                '화양초': '창원', '신방초': '창원', '자여초': '창원', '소답초': '창원', '창원초': '창원', 
+                '도계초': '창원', '명도초': '창원', '창원한들초': '창원', '시화초': '창원', '사화초': '창원', 
+                '중동초': '창원', '평산초': '창원', '의창초': '창원', '명서초': '창원', '명곡초': '창원', 
+                '상북초': '창원', '봉림초': '창원'
+            };
+
+            // [핵심 3] 나이스 API 연동 (버그 우회 및 동명이교 방지)
+            let schoolRegionCache = {};
+            let schoolSubRegionMap = {}; 
+
             validRows.forEach(row => {
                 const rLoc = row.parsedLocation.region || '';
-                const dRaw = row.deptRaw || '';
-                const aRaw = row.authRaw || '';
+                const dRaw = row.deptRaw || ''; const aRaw = row.authRaw || '';
                 const sLoc = row.parsedLocation.school || '';
-
                 if(sLoc && sLoc.match(/초등학교|유치원|분교|학교/)) {
-                    if (dRaw.includes('마산') || aRaw.includes('마산') || rLoc.includes('마산') || sLoc.includes('마산')) {
-                        schoolSubRegionMap[sLoc] = '마산';
-                    } else if (dRaw.includes('진해') || aRaw.includes('진해') || rLoc.includes('진해') || sLoc.includes('진해')) {
-                        schoolSubRegionMap[sLoc] = '진해';
-                    }
+                    if (dRaw.includes('마산') || aRaw.includes('마산') || rLoc.includes('마산') || sLoc.includes('마산')) schoolSubRegionMap[sLoc] = '마산';
+                    else if (dRaw.includes('진해') || aRaw.includes('진해') || rLoc.includes('진해') || sLoc.includes('진해')) schoolSubRegionMap[sLoc] = '진해';
                 }
             });
 
             for(let row of validRows) {
                 let loc = row.parsedLocation;
-                let sLoc = loc.school || '';
-                let rLoc = loc.region || '';
+                let sLoc = loc.school || ''; let rLoc = loc.region || '';
                 
                 let needsRegionApi = !rLoc && sLoc.match(/초등학교|유치원|분교|학교/);
-                
-                // 창원 소속인데 마산/진해 판별이 아직 안 된 학교들 (예: 가고파초등학교)
                 let isChangwonArea = (rLoc.includes('창원') || row.deptRaw.includes('창원')) && sLoc.match(/초등학교|유치원|분교|학교/);
                 let needsSubRegionApi = isChangwonArea && !schoolSubRegionMap[sLoc];
 
                 if (needsRegionApi || needsSubRegionApi) {
-                    let searchName = sLoc;
-                    if (searchName.includes('유치원')) {
-                        searchName = searchName.replace(/병설유치원|유치원/g, '초등학교');
-                    }
+                    let searchName = sLoc.includes('유치원') ? sLoc.replace(/병설유치원|유치원/g, '초등학교') : sLoc;
+                    
+                    let excelOfficeName = "";
+                    if (row.deptRaw) { let m = row.deptRaw.match(/([가-힣]+(교육청|교육지원청))/); if (m) excelOfficeName = m[1]; }
+                    if (!excelOfficeName && rLoc) { let m = rLoc.match(/([가-힣]+(교육청|교육지원청))/); if(m) excelOfficeName = m[1]; }
 
-                    if(schoolRegionCache[searchName]) {
-                        if(needsRegionApi) loc.region = schoolRegionCache[searchName];
-                        continue; 
-                    }
+                    let cacheKey = searchName + "_" + excelOfficeName;
+                    if(schoolRegionCache[cacheKey]) { if(needsRegionApi) loc.region = schoolRegionCache[cacheKey]; continue; }
 
                     try {
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 3000); 
-                        // [수정] 동명이교 탐색을 위해 pSize를 5로 증가시켜 여러 결과를 가져옵니다.
-                        let res = await fetch(`https://open.neis.go.kr/hub/schoolInfo?Type=json&pIndex=1&pSize=5&SCHUL_NM=${encodeURIComponent(searchName)}`, { signal: controller.signal });
-                        clearTimeout(timeoutId);
+                        // [강력 업데이트 2] 마산/진해 생략 학교명 완벽 탐색 (예: 교동초 -> 마산교동초)
+                        let searchNamesToTry = [searchName];
+                        let isCwArea = isChangwonArea || excelOfficeName.includes('창원') || excelOfficeName.includes('마산') || excelOfficeName.includes('진해');
                         
-                        let data = await res.json();
-                        if(data.schoolInfo && data.schoolInfo[1].row && data.schoolInfo[1].row.length > 0) {
-                            let rows = data.schoolInfo[1].row;
-                            let rowData = rows[0]; // 기본 첫번째 결과
+                        // 창원 지역 소속임이 확실한데 이름에 마산/진해가 없다면, API 검색 실패를 대비해 접두어 버전을 장전합니다.
+                        if (isCwArea && !searchName.startsWith('마산') && !searchName.startsWith('진해') && !searchName.startsWith('창원')) {
+                            searchNamesToTry.push('마산' + searchName);
+                            searchNamesToTry.push('진해' + searchName);
+                            searchNamesToTry.push('창원' + searchName);
+                        }
+
+                        let bestMatch = null;
+                        let gyeongnamMatch = null;
+                        let rowData = null;
+
+                        for (let sName of searchNamesToTry) {
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 3000); 
+                            let apiUrl = `https://open.neis.go.kr/hub/schoolInfo?Type=json&pIndex=1&pSize=100&SCHUL_NM=${encodeURIComponent(sName)}`;
+                            let res = await fetch(apiUrl, { signal: controller.signal });
+                            clearTimeout(timeoutId);
                             
-                            // [강력 업데이트] 동명이교(예: 경기 오산, 울산 등) 방지 및 경상남도 소속 학교 우선 탐색
-                            for(let r of rows) {
-                                if (r.ATPT_OFCDC_SC_NM && r.ATPT_OFCDC_SC_NM.includes('경상남도')) {
-                                    rowData = r; break;
+                            let data = await res.json();
+                            if(data.schoolInfo && data.schoolInfo[1].row && data.schoolInfo[1].row.length > 0) {
+                                let rows = data.schoolInfo[1].row;
+                                if (!rowData) rowData = rows[0]; 
+                                
+                                for(let r of rows) {
+                                    let rDept = r.JU_ORG_NM || ""; let rSido = r.ATPT_OFCDC_SC_NM || ""; 
+                                    if (rSido.includes('경상남도')) {
+                                        if (!gyeongnamMatch) gyeongnamMatch = r;
+                                        if (excelOfficeName) {
+                                            let searchOffice = excelOfficeName.replace(/마산|진해/, '창원').replace(/교육청$/, '교육지원청');
+                                            if (rDept.includes(searchOffice) || searchOffice.includes(rDept)) { bestMatch = r; break; }
+                                        } else if (isCwArea && rDept.includes('창원')) {
+                                            bestMatch = r; break; 
+                                        }
+                                    }
                                 }
                             }
+                            if (bestMatch) break; // 완벽한 창원/마산/진해 소속 학교를 찾았다면 즉시 검색 중단!
+                        }
 
+                        if (bestMatch) rowData = bestMatch; else if (gyeongnamMatch) rowData = gyeongnamMatch;
+
+                        if (rowData) {
                             let orgNm = rowData.JU_ORG_NM || rowData.ATPT_OFCDC_SC_NM; 
                             const provRegex = /(경상남도|경상북도|경기도|전라남도|전라북도|전북특별자치도|충청남도|충청북도|강원도|강원특별자치도|제주특별자치도|서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시)/g;
-                            
-                            // 교육청 자체인 경우(예: 울산광역시교육청)는 자르지 않음
                             if (orgNm !== rowData.ATPT_OFCDC_SC_NM || rowData.JU_ORG_NM) {
                                 let strippedOrgNm = orgNm.replace(provRegex, '').replace(/^교육청/, '');
-                                
-                                // 나이스 API에서 가져온 이름도 강북/동부 등은 시/도 명칭 스마트 복원
                                 if (strippedOrgNm.match(/^(강남|강북|동부|서부|남부|북부|중부|성북|성동|동래|해운대|강서|강동)/)) {
                                     let provMatch = (rowData.ATPT_OFCDC_SC_NM || "").match(provRegex);
-                                    if (provMatch) {
-                                        orgNm = provMatch[0] + strippedOrgNm;
-                                    } else {
-                                        orgNm = strippedOrgNm;
-                                    }
-                                } else {
-                                    orgNm = strippedOrgNm;
-                                }
+                                    if (provMatch) orgNm = provMatch[0] + strippedOrgNm; else orgNm = strippedOrgNm;
+                                } else orgNm = strippedOrgNm;
                             }
                             
-                            schoolRegionCache[searchName] = orgNm;
+                            schoolRegionCache[cacheKey] = orgNm;
                             if(needsRegionApi) loc.region = orgNm;
 
-                            // [핵심] 주소(ORG_RDNMA)로 마산(합포구/회원구), 진해(진해구) 완벽 판별
                             let address = rowData.ORG_RDNMA || rowData.ORG_RDNDA || "";
-                            if (address.includes('마산합포구') || address.includes('마산회원구') || address.includes('마산시')) {
-                                schoolSubRegionMap[sLoc] = '마산';
-                            } else if (address.includes('진해구') || address.includes('진해시')) {
-                                schoolSubRegionMap[sLoc] = '진해';
-                            } else if (address.includes('의창구') || address.includes('성산구') || address.includes('창원시')) {
-                                schoolSubRegionMap[sLoc] = '창원';
-                            }
+                            if (address.includes('마산합포구') || address.includes('마산회원구') || address.includes('마산시')) schoolSubRegionMap[sLoc] = '마산';
+                            else if (address.includes('진해구') || address.includes('진해시')) schoolSubRegionMap[sLoc] = '진해';
+                            else if (address.includes('의창구') || address.includes('성산구') || address.includes('창원시')) schoolSubRegionMap[sLoc] = '창원';
                         } else {
-                            if(needsRegionApi) schoolRegionCache[searchName] = '기타지역'; 
+                            if(needsRegionApi) schoolRegionCache[cacheKey] = '기타지역'; 
                         }
-                    } catch(e) {
-                        if(needsRegionApi) schoolRegionCache[searchName] = '기타지역'; 
-                    }
+                    } catch(e) { if(needsRegionApi) schoolRegionCache[cacheKey] = '기타지역'; }
                 }
                 if (!loc.region) loc.region = '기타지역';
             }
 
-            // 가장 마지막 경력을 찾아 기준일까지 강제 연장
-            let latestValidRow = null;
-            let maxDate = "0000-00-00";
-            validRows.forEach(row => {
-                if (!row.hasExplicitEndDate && row.startDate > maxDate) {
-                    if (!row.typeRaw.match(/교육청간|부처간|교육청내|부처내/) || 
-                        (row.parsedLocation.school && !row.parsedLocation.school.includes('학무과') && !row.parsedLocation.school.includes('교육과') && !row.parsedLocation.school.includes('지원국'))) {
-                        latestValidRow = row;
-                        maxDate = row.startDate;
-                    }
-                }
-            });
-
-            if (latestValidRow) {
-                latestValidRow.endDate = refDateStr;
-                latestValidRow.isCurrentJob = true; 
-            }
-
-            // 신규채용, 교육청 부서 기점 등 특수 마커 식별
-            validRows.forEach(row => {
-                const t = row.typeRaw.replace(/\s+/g, '');
-                if (t.includes('채용') || t.includes('공채')) {
-                    row.isNewHireMarker = true; 
-                }
-                // [업데이트] 시도간 '전입', '전출' 도 부서 기점(isInterOffice)으로 흡수시켜 단독 블록 생성을 막음
-                if (t.match(/교육청간|부처간|교육청내|부처내|전입|전출/)) {
-                    if (!row.parsedLocation.school || 
-                        row.parsedLocation.school.includes('학무과') || 
-                        row.parsedLocation.school.includes('교육과') || 
-                        row.parsedLocation.school.includes('지원국')) {
-                        row.isInterOffice = true; 
-                    } else {
-                        row.category = 'MARKER'; 
-                    }
-                }
-
-                if (!row.hasExplicitEndDate && !row.isCurrentJob) {
-                    if (row.category === 'WORK' && !row.isNewHireMarker && !row.isInterOffice) {
-                        row.endDate = refDateStr;
-                    } else {
-                        row.endDate = row.startDate;
-                    }
-                }
-            });
-
-            // 1차 정렬
-            validRows.sort((a, b) => {
-                let diff = new Date(a.startDate) - new Date(b.startDate);
-                if (diff === 0) {
-                    if (a.isNewHireMarker && !b.isNewHireMarker) return -1;
-                    if (!a.isNewHireMarker && b.isNewHireMarker) return 1;
-                    if (a.isInterOffice && !b.isInterOffice) return -1;
-                    if (!a.isInterOffice && b.isInterOffice) return 1;
-
-                    const getCatOrder = cat => ({ 'HIDDEN_WORK': 1, 'MARKER': 2, 'WORK': 3, 'EXCLUSION': 4 })[cat] || 5;
-                    if (getCatOrder(a.category) !== getCatOrder(b.category)) return getCatOrder(a.category) - getCatOrder(b.category);
-                    return 0;
-                }
-                return diff;
-            });
-
-            // [강력 업데이트] 동기화 로직: 1순위로 "시작 날짜가 같은 진짜 학교"를 찾음
-            const syncSpecialLocations = (rows) => {
-                for(let i=0; i<rows.length; i++) {
-                    const row = rows[i];
-                    const isSpecial = row.isNewHireMarker || row.isInterOffice || row.category === 'EXCLUSION' || row.category === 'HIDDEN_WORK' || row.typeRaw.includes('파견') || row.typeRaw.includes('휴직');
-                    
-                    if(isSpecial) {
-                        const sch = row.parsedLocation.school || '';
-                        if (sch.match(/초등학교|유치원|분교|학교/) && !row.isInheritedLoc) continue; 
-
-                        let found = false;
-                        
-                        // 1순위: 나와 "시작 날짜"가 완전히 동일한 실제 학교를 최우선 검색
-                        for(let j=0; j<rows.length; j++) {
-                            const targetRow = rows[j];
-                            const targetSch = targetRow.parsedLocation.school || '';
-                            if (i !== j && targetRow.startDate === row.startDate && targetSch.match(/초등학교|유치원|분교|학교/) && !targetRow.isInheritedLoc) {
-                                row.parsedLocation.region = targetRow.parsedLocation.region;
-                                row.parsedLocation.school = targetRow.parsedLocation.school;
-                                row.isInheritedLoc = true;
-                                found = true;
-                                break;
-                            }
-                        }
-
-                        // 2순위: 날짜가 같은 학교가 없다면, 가장 가까운 미래의 학교를 찾음
-                        if (!found) {
-                            for(let j=i+1; j<rows.length; j++) {
-                                const nextRow = rows[j];
-                                const nextSch = nextRow.parsedLocation.school || '';
-                                if(nextSch.match(/초등학교|유치원|분교|학교/) && !nextRow.isInheritedLoc) {
-                                    row.parsedLocation.region = nextRow.parsedLocation.region;
-                                    row.parsedLocation.school = nextRow.parsedLocation.school;
-                                    row.isInheritedLoc = true; 
-                                    found = true;
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        // 3순위: 미래에도 없다면, 가장 가까운 과거의 학교를 찾음
-                        if (!found) {
-                            for(let j=i-1; j>=0; j--) {
-                                const prevRow = rows[j];
-                                const prevSch = prevRow.parsedLocation.school || '';
-                                if(prevSch.match(/초등학교|유치원|분교|학교/) && !prevRow.isInheritedLoc) {
-                                    row.parsedLocation.region = prevRow.parsedLocation.region;
-                                    row.parsedLocation.school = prevRow.parsedLocation.school;
-                                    row.isInheritedLoc = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            };
-
-            // 1차 동기화
+            // 1차 동기화 수행
             syncSpecialLocations(validRows);
 
-            // (학교별 마산/진해 소속 기억 로직은 상단 API 연동부로 통합/이동됨)
+            // [핵심 2] 명시적 종료일 없는 발령 기간(endDate) 스마트 할당 (분할 로직 전진 배치!)
+            validRows.forEach((row, i) => {
+                if (!row.hasExplicitEndDate) {
+                    if ((row.category === 'WORK' || row.category === 'EXCLUSION' || row.category === 'MARKER') && !row.isPhaseChanger) {
+                        let nextEventRow = null;
+                        for (let j = i + 1; j < validRows.length; j++) {
+                            let nextRow = validRows[j];
+                            if ((row.category === 'EXCLUSION' || row.typeRaw.includes('휴직') || row.typeRaw.includes('파견')) && 
+                                (nextRow.typeRaw.includes('복직') || nextRow.typeRaw.includes('파견복귀'))) { nextEventRow = nextRow; break; }
+                            
+                            // 다음 이동 기록 감지
+                            if ((nextRow.category === 'WORK' || nextRow.category === 'MARKER') && 
+                                !nextRow.isPhaseChanger && nextRow.parsedLocation.school !== row.parsedLocation.school) {
+                                nextEventRow = nextRow; break;
+                            }
+                        }
+                        if (nextEventRow) {
+                            let d = new Date(nextEventRow.startDate); d.setDate(d.getDate() - 1);
+                            let endStr = d.toISOString().split('T')[0];
+                            row.endDate = (endStr < row.startDate) ? row.startDate : endStr;
+                        } else {
+                            row.endDate = refDateStr; // 다음 기록이 없으면 기준일까지 연장
+                        }
+                    } else {
+                        row.endDate = row.startDate; // 마커들은 당일치기
+                    }
+                }
+            });
 
-            // 창원/마산/진해 통합 및 분할 로직
+            // [핵심 5] 관내 이동 구간 지역 동기화 (연대 책임 알고리즘)
+            let currentSyncPhase = []; let phasesForSync = [];
+            validRows.forEach(row => {
+                if (row.isPhaseChanger) {
+                    if (currentSyncPhase.length > 0) phasesForSync.push(currentSyncPhase);
+                    currentSyncPhase = [];
+                }
+                currentSyncPhase.push(row);
+            });
+            if (currentSyncPhase.length > 0) phasesForSync.push(currentSyncPhase);
+
+            phasesForSync.forEach(phaseRows => {
+                let knownSubRegion = null;
+                for (let row of phaseRows) {
+                    let sLoc = row.parsedLocation.school || '';
+                    if (sLoc && schoolSubRegionMap[sLoc]) { knownSubRegion = schoolSubRegionMap[sLoc]; break; }
+                    
+                    let dRaw = row.deptRaw || '', aRaw = row.authRaw || '', rLoc = row.parsedLocation.region || '';
+                    if (dRaw.includes('마산') || aRaw.includes('마산') || rLoc.includes('마산') || sLoc.includes('마산')) knownSubRegion = '마산';
+                    else if (dRaw.includes('진해') || aRaw.includes('진해') || rLoc.includes('진해') || sLoc.includes('진해')) knownSubRegion = '진해';
+                    if(knownSubRegion) break;
+                }
+                if (knownSubRegion) { phaseRows.forEach(row => row.syncSubRegion = knownSubRegion); }
+            });
+
+            // [핵심 4] 창원/마산/진해 통합 및 2010.09.01 분할 로직
             let splitRows = [];
             validRows.forEach(row => {
-                const rLoc = row.parsedLocation.region || '';
-                const dRaw = row.deptRaw || '';
-                const aRaw = row.authRaw || '';
-                const sLoc = row.parsedLocation.school || ''; 
+                const rLoc = row.parsedLocation.region || '', dRaw = row.deptRaw || '', aRaw = row.authRaw || '', sLoc = row.parsedLocation.school || ''; 
                 
                 let isChangwonArea = false;
-                if (rLoc.match(/창원|마산|진해/) && rLoc.includes('교육')) {
-                    isChangwonArea = true;
-                } else if ((dRaw.includes('창원') || dRaw.includes('마산') || dRaw.includes('진해')) && 
-                           (dRaw.includes('초등학교') || dRaw.includes('유치원') || dRaw.includes('교육') || dRaw.includes('학교'))) {
-                    isChangwonArea = true;
-                } else if (aRaw.includes('창원') || aRaw.includes('마산') || aRaw.includes('진해')) {
-                    isChangwonArea = true;
-                }
-
-                if (rLoc === '경상남도교육청' && !dRaw.includes('창원') && !dRaw.includes('마산') && !dRaw.includes('진해')) {
-                    isChangwonArea = false;
-                }
+                if (rLoc.match(/창원|마산|진해/) && rLoc.includes('교육')) isChangwonArea = true;
+                else if ((dRaw.includes('창원') || dRaw.includes('마산') || dRaw.includes('진해')) && (dRaw.includes('초등학교') || dRaw.includes('유치원') || dRaw.includes('교육') || dRaw.includes('학교'))) isChangwonArea = true;
+                else if (aRaw.includes('창원') || aRaw.includes('마산') || aRaw.includes('진해')) isChangwonArea = true;
+                if (rLoc === '경상남도교육청' && !dRaw.includes('창원') && !dRaw.includes('마산') && !dRaw.includes('진해')) isChangwonArea = false;
 
                 if (isChangwonArea) {
                     let subRegion = "창원";
-                    if (dRaw.includes('마산') || aRaw.includes('마산') || rLoc.includes('마산') || sLoc.includes('마산') || schoolSubRegionMap[sLoc] === '마산') {
-                        subRegion = "마산";
-                    } else if (dRaw.includes('진해') || aRaw.includes('진해') || rLoc.includes('진해') || sLoc.includes('진해') || schoolSubRegionMap[sLoc] === '진해') {
-                        subRegion = "진해";
+                    
+                    let forceRegion = null;
+                    let sortedKeys = Object.keys(HARDCODED_SCHOOLS).sort((a, b) => b.length - a.length);
+                    for (let key of sortedKeys) {
+                        if (sLoc.includes(key)) { forceRegion = HARDCODED_SCHOOLS[key]; break; }
                     }
 
-                    if (row.startDate < "2010-07-01" && row.endDate >= "2010-07-01") {
+                    // [궁극의 해결] 0순위: 선생님께서 제공하신 지도 기반 절대 배정표 (창원, 마산 관내 모든 학교)
+                    if (forceRegion) {
+                        subRegion = forceRegion;
+                    } 
+                    // 1순위: 개별 학교의 API 주소 결과나 명시적 키워드가 있으면 무조건 최우선 독립!
+                    else if (schoolSubRegionMap[sLoc] === '마산' || dRaw.includes('마산') || aRaw.includes('마산') || rLoc.includes('마산') || sLoc.includes('마산')) {
+                        subRegion = "마산";
+                    } else if (schoolSubRegionMap[sLoc] === '진해' || dRaw.includes('진해') || aRaw.includes('진해') || rLoc.includes('진해') || sLoc.includes('진해')) {
+                        subRegion = "진해";
+                    } else if (schoolSubRegionMap[sLoc] === '창원') {
+                        subRegion = "창원";
+                    } 
+                    // 2순위: 자기 정보를 아예 모를 때만 동기화 꼬리표(연대 책임)를 따름
+                    else if (row.syncSubRegion) {
+                        subRegion = row.syncSubRegion;
+                    }
+
+                    if (row.startDate < "2010-09-01" && row.endDate >= "2010-09-01") {
                         let r1 = JSON.parse(JSON.stringify(row));
-                        r1.endDate = "2010-06-30";
-                        r1.parsedLocation.region = subRegion + "교육청";
+                        r1.endDate = "2010-08-31"; r1.parsedLocation.region = subRegion + "교육청";
                         splitRows.push(r1);
 
                         let r2 = JSON.parse(JSON.stringify(row));
-                        r2.startDate = "2010-07-01";
-                        r2.parsedLocation.region = `창원교육지원청(${subRegion})`;
+                        r2.startDate = "2010-09-01"; r2.parsedLocation.region = `창원교육지원청(${subRegion})`;
                         splitRows.push(r2);
-                    } else if (row.startDate >= "2010-07-01") {
+                    } else if (row.startDate >= "2010-09-01") {
                         row.parsedLocation.region = `창원교육지원청(${subRegion})`;
                         splitRows.push(row);
                     } else {
@@ -854,91 +779,39 @@
             });
             validRows = splitRows;
 
-            // 분할 후 재정렬
+            // 2차 정렬 (분할된 것들 붙이기)
             validRows.sort((a, b) => {
                 let diff = new Date(a.startDate) - new Date(b.startDate);
                 if (diff === 0) {
                     if (a.isNewHireMarker && !b.isNewHireMarker) return -1;
                     if (!a.isNewHireMarker && b.isNewHireMarker) return 1;
-                    if (a.isInterOffice && !b.isInterOffice) return -1;
-                    if (!a.isInterOffice && b.isInterOffice) return 1;
-
+                    if (a.isPhaseChanger && !b.isPhaseChanger) return -1;
+                    if (!a.isPhaseChanger && b.isPhaseChanger) return 1;
                     const getCatOrder = cat => ({ 'HIDDEN_WORK': 1, 'MARKER': 2, 'WORK': 3, 'EXCLUSION': 4 })[cat] || 5;
                     if (getCatOrder(a.category) !== getCatOrder(b.category)) return getCatOrder(a.category) - getCatOrder(b.category);
-                    
-                    const isPromo = t => t.includes('승진') ? -1 : 1;
-                    return isPromo(a.typeRaw) - isPromo(b.typeRaw);
+                    return a.typeRaw.includes('승진') ? -1 : 1;
                 }
                 return diff;
             });
 
-            // 2차 동기화
+            // 2차 동기화 (분할로 쪼개진 기록들 학교/지역 붙여주기)
             syncSpecialLocations(validRows);
 
-            // [궁극의 업데이트] 명시적 종료일이 없는 발령들의 근무 기간(endDate) 스마트 할당
-            // 2차 동기화까지 끝나 소속 학교가 완벽해진 상태(과거->미래 정렬)에서 다음 이동일을 찾아줍니다.
-            validRows.forEach((row, i) => {
-                if (!row.hasExplicitEndDate) {
-                    // 실제 근무(WORK), 휴직/파견(EXCLUSION), 학교로 배치된 전보(MARKER)
-                    if ((row.category === 'WORK' || row.category === 'EXCLUSION' || row.category === 'MARKER') && !row.isNewHireMarker && !row.isInterOffice) {
-                        let nextEventRow = null;
-                        
-                        // 내 이후(미래) 기록 중 종료 시점을 알려주는 발령 찾기
-                        for (let j = i + 1; j < validRows.length; j++) {
-                            let nextRow = validRows[j];
-                            
-                            // 1. 내가 휴직이나 파견 중일 때, '복직'이나 '파견복귀'를 만나면
-                            if ((row.category === 'EXCLUSION' || row.typeRaw.includes('휴직') || row.typeRaw.includes('파견')) && 
-                                (nextRow.typeRaw.includes('복직') || nextRow.typeRaw.includes('파견복귀'))) {
-                                nextEventRow = nextRow;
-                                break;
-                            }
-
-                            // 2. 다른 학교로 떠나는 발령을 만나면
-                            if ((nextRow.category === 'WORK' || nextRow.category === 'MARKER') && 
-                                !nextRow.isNewHireMarker && !nextRow.isInterOffice &&
-                                nextRow.parsedLocation.school !== row.parsedLocation.school) {
-                                nextEventRow = nextRow;
-                                break;
-                            }
-                        }
-
-                        if (nextEventRow) {
-                            // 복직이나 다른 학교 발령일의 '전날'까지를 종료일로 설정
-                            let d = new Date(nextEventRow.startDate);
-                            d.setDate(d.getDate() - 1);
-                            let endStr = d.toISOString().split('T')[0];
-                            // 혹시 시작일보다 앞서게 되는 경우 당일로 보정
-                            row.endDate = (endStr < row.startDate) ? row.startDate : endStr;
-                        } else {
-                            // 다음 기록이 없다면 현재 상태 진행 중이므로 '기준일'까지 꽉 채워 연장
-                            row.endDate = refDateStr;
-                        }
-                    } else {
-                        // 순수 기점(Marker)들은 당일 하루짜리로 둠
-                        row.endDate = row.startDate;
-                    }
-                }
-            });
-
-            // 직급(지역) 구간 자동 분류
-            let phases = [];
-            let currentPhase = null;
-            let currentMarkerContext = { region: null, school: null };
-
+            // Phase / Block 편성
+            let phases = []; let currentPhase = null; let currentMarkerContext = { region: null, school: null };
             validRows.forEach(row => {
-                if (row.category === 'MARKER' || row.isNewHireMarker || row.isInterOffice) {
+                if (row.category === 'MARKER' || row.isPhaseChanger) {
                     currentMarkerContext.region = row.parsedLocation.region;
                     currentMarkerContext.school = row.parsedLocation.school;
                 }
                 
-                if (!row.parsedLocation.region && currentMarkerContext.region) {
+                // 그림자 상속 방어
+                if (!row.parsedLocation.region && currentMarkerContext.region && !row.isPhaseChanger) {
                     Object.assign(row.parsedLocation, { region: currentMarkerContext.region, school: currentMarkerContext.school });
                     row.inherited = true; 
                 }
 
                 let regionContext = row.parsedLocation.region || '기타지역';
-
                 if (!currentPhase || currentPhase.region !== regionContext) {
                     currentPhase = { id: phases.length + 1, region: regionContext, blocks: [] };
                     phases.push(currentPhase);
@@ -946,14 +819,14 @@
                 row.phaseId = currentPhase.id;
             });
 
-            // 역순 정렬
+            // 출력용 최종 역순 정렬
             validRows.sort((a, b) => {
                 let diff = new Date(b.startDate) - new Date(a.startDate);
                 if(diff === 0) {
                     if (a.isNewHireMarker && !b.isNewHireMarker) return 1; 
                     if (!a.isNewHireMarker && b.isNewHireMarker) return -1;
-                    if (a.isInterOffice && !b.isInterOffice) return 1; 
-                    if (!a.isInterOffice && b.isInterOffice) return -1;
+                    if (a.isPhaseChanger && !b.isPhaseChanger) return 1; 
+                    if (!a.isPhaseChanger && b.isPhaseChanger) return -1;
 
                     if (b.phaseId !== a.phaseId) return b.phaseId - a.phaseId; 
                     const getCatOrder = cat => ({ 'HIDDEN_WORK': 1, 'MARKER': 2, 'WORK': 3, 'EXCLUSION': 4 })[cat] || 5;
@@ -962,45 +835,33 @@
                 return diff;
             });
 
-            // 블록 단위 생성
             let currentBlock = null;
             validRows.forEach(row => {
                 let schoolContext = row.parsedLocation.school || row.deptRaw || '소속 불명';
                 const isKinder = schoolContext.includes('유치원');
-                
                 let targetPhase = phases.find(p => p.id === row.phaseId) || phases[phases.length-1];
 
                 if (!currentBlock || currentBlock.school !== schoolContext || currentBlock.phaseId !== row.phaseId) {
-                    currentBlock = {
-                        school: schoolContext,
-                        phaseId: row.phaseId,
-                        records: [],
-                        isKinder: isKinder
-                    };
+                    currentBlock = { school: schoolContext, phaseId: row.phaseId, records: [], isKinder: isKinder };
                     targetPhase.blocks.push(currentBlock);
                 }
-                
                 currentBlock.records.push(row);
             });
 
             let globalTotalYMD = {y:0, m:0, d:0};
             let resultHtml = '';
+            phases.reverse(); // 화면 표출 시 최신 구역이 가장 위로 오게 정렬
             
-            // 전체 지역(Phase) 순서도 역순 정렬
-            phases.reverse();
-            
-            // UI 렌더링
+            // UI 렌더링부
             phases.forEach(section => {
-                let secWorkRecords = [];
-                let secExcRecords = [];
-                let validBlocks = false;
+                let secWorkRecords = [], secExcRecords = [], validBlocks = false;
                 
                 section.blocks.forEach(b => {
                     const vRecs = b.records.filter(r => r.category !== 'HIDDEN_WORK');
                     if (vRecs.length > 0) validBlocks = true;
 
                     if (!b.isKinder) {
-                        const bWorkRecs = b.records.filter(r => (r.category === 'WORK' || r.category === 'MARKER') && !(r.startDate === r.endDate && (r.isNewHireMarker || r.isInterOffice)));
+                        const bWorkRecs = b.records.filter(r => (r.category === 'WORK' || r.category === 'MARKER') && !(r.startDate === r.endDate && r.isPhaseChanger));
                         const bExcRecs = b.records.filter(r => r.category === 'EXCLUSION');
                         secWorkRecords = secWorkRecords.concat(bWorkRecs);
                         secExcRecords = secExcRecords.concat(bExcRecs);
@@ -1009,13 +870,7 @@
                 
                 if(!validBlocks) return;
                 
-                let secWorkMerged = mergePeriods(secWorkRecords);
-                let secWorkYMD = getPeriodFromMerged(secWorkMerged);
-                
-                let secExcMerged = mergePeriods(secExcRecords);
-                let secExcYMD = getPeriodFromMerged(secExcMerged);
-                
-                let sPeriodYMD = subYMD(secWorkYMD, secExcYMD);
+                let sPeriodYMD = subYMD(getPeriodFromMerged(mergePeriods(secWorkRecords)), getPeriodFromMerged(mergePeriods(secExcRecords)));
                 globalTotalYMD = addYMD(globalTotalYMD, sPeriodYMD);
 
                 let secStart = "9999-99-99", secEnd = "0000-00-00";
@@ -1029,20 +884,11 @@
                 resultHtml += `
                 <div class="relative pl-8 sm:pl-12 mb-10 group">
                     <div class="timeline-line group-last:bg-gradient-to-b group-last:from-slate-200 group-last:to-transparent"></div>
-                    
-                    <!-- Region Header -->
                     <div class="relative z-10 glass-panel rounded-2xl p-4 sm:p-6 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-l-indigo-500 shadow-sm transition-shadow hover:shadow-md">
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-inner">
-                                <i class="fa-solid fa-map-location-dot text-white text-xl"></i>
-                            </div>
+                            <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-inner"><i class="fa-solid fa-map-location-dot text-white text-xl"></i></div>
                             <div>
-                                <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
-                                    ${section.region}
-                                    <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center shadow-sm">
-                                        <i class="fa-solid fa-layer-group mr-1"></i> 초등교사 구간
-                                    </span>
-                                </h2>
+                                <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">${section.region} <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center shadow-sm"><i class="fa-solid fa-layer-group mr-1"></i> 초등교사 구간</span></h2>
                                 <p class="text-sm text-slate-500 font-medium mt-1 flex items-center"><i class="fa-regular fa-calendar text-slate-400 mr-1.5"></i> ${secStart} ~ ${secEnd}</p>
                             </div>
                         </div>
@@ -1051,7 +897,6 @@
                             <p class="text-lg font-black text-indigo-700">${formatYMDObj(sPeriodYMD)} <span class="text-sm text-slate-400 font-semibold ml-1">(${periodToDays(sPeriodYMD)}일)</span></p>
                         </div>
                     </div>
-
                     <div class="space-y-6">
                 `;
 
@@ -1060,31 +905,14 @@
                     if (vRecs.length === 0) return;
 
                     let bStart = "9999-99-99", bEnd = "0000-00-00";
-                    
-                    // 1. 일반 발령 기록으로 전체 기간 찾기
-                    vRecs.forEach(r => {
-                        if(!r.isNewHireMarker && !r.isInterOffice) { 
-                            if (r.startDate < bStart) bStart = r.startDate;
-                            if (r.endDate > bEnd) bEnd = r.endDate;
-                        }
-                    });
-
-                    // 2. [강력 업데이트] 일반 기록이 없어 '기록 없음'이 뜰 위기라면, 신규채용/기점의 날짜를 강제로 끌어옴
-                    if (bStart === "9999-99-99") {
-                        vRecs.forEach(r => {
-                            if (r.startDate < bStart) bStart = r.startDate;
-                            if (r.endDate > bEnd) bEnd = r.endDate;
-                        });
-                    }
-
+                    vRecs.forEach(r => { if(!r.isPhaseChanger) { if (r.startDate < bStart) bStart = r.startDate; if (r.endDate > bEnd) bEnd = r.endDate; } });
+                    if (bStart === "9999-99-99") { vRecs.forEach(r => { if (r.startDate < bStart) bStart = r.startDate; if (r.endDate > bEnd) bEnd = r.endDate; }); }
                     if (bStart === "9999-99-99") { bStart = "기록 없음"; bEnd = "기록 없음"; }
 
-                    const bWorkRecs = block.records.filter(r => (r.category === 'WORK' || r.category === 'MARKER') && !(r.startDate === r.endDate && (r.isNewHireMarker || r.isInterOffice)));
+                    const bWorkRecs = block.records.filter(r => (r.category === 'WORK' || r.category === 'MARKER') && !(r.startDate === r.endDate && r.isPhaseChanger));
                     const bExcRecs = block.records.filter(r => r.category === 'EXCLUSION');
                     
-                    let bWorkYMD = getPeriodFromMerged(mergePeriods(bWorkRecs));
-                    let bExcYMD = getPeriodFromMerged(mergePeriods(bExcRecs));
-                    let bPeriodYMD = subYMD(bWorkYMD, bExcYMD);
+                    let bPeriodYMD = subYMD(getPeriodFromMerged(mergePeriods(bWorkRecs)), getPeriodFromMerged(mergePeriods(bExcRecs)));
                     
                     let bgClass = block.isKinder ? "bg-amber-50/50 border-amber-200" : "bg-white border-slate-200";
                     let titleClass = block.isKinder ? "text-amber-900" : "text-slate-900";
@@ -1094,60 +922,32 @@
                     <div class="relative">
                         <div class="timeline-dot ${dotClass}"></div>
                         <div class="glass-panel rounded-2xl overflow-hidden border ${bgClass} transition-shadow hover:shadow-md">
-                            <!-- School Header -->
                             <div class="border-b border-slate-100/80 px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/50">
                                 <div>
-                                    <h3 class="text-lg font-extrabold ${titleClass} flex items-center gap-2">
-                                        ${block.school}
-                                        ${block.isKinder ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md border border-amber-200 font-bold shadow-sm">병설유치원 (합산제외)</span>' : ''}
-                                    </h3>
+                                    <h3 class="text-lg font-extrabold ${titleClass} flex items-center gap-2">${block.school} ${block.isKinder ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md border border-amber-200 font-bold shadow-sm">병설유치원 (합산제외)</span>' : ''}</h3>
                                     <p class="text-sm text-slate-500 font-medium mt-0.5 flex items-center"><i class="fa-regular fa-clock text-slate-400 mr-1.5"></i> ${bStart} ~ ${bEnd}</p>
                                 </div>
                                 ${!block.isKinder ? `
                                 <div class="text-right">
                                     <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">실근무 계산 (나이스 역산법)</p>
-                                    <span class="inline-flex items-baseline px-3 py-1 rounded-lg bg-blue-50 border border-blue-100 shadow-sm">
-                                        <span class="text-blue-700 font-black text-sm">${formatYMDObj(bPeriodYMD)}</span>
-                                        <span class="text-blue-400 text-xs font-semibold ml-1.5">(${periodToDays(bPeriodYMD)}일)</span>
-                                    </span>
+                                    <span class="inline-flex items-baseline px-3 py-1 rounded-lg bg-blue-50 border border-blue-100 shadow-sm"><span class="text-blue-700 font-black text-sm">${formatYMDObj(bPeriodYMD)}</span><span class="text-blue-400 text-xs font-semibold ml-1.5">(${periodToDays(bPeriodYMD)}일)</span></span>
                                 </div>` : ''}
                             </div>
-                            <!-- Records List -->
-                            <div class="p-4 sm:p-6">
-                                <ul class="space-y-2">
+                            <div class="p-4 sm:p-6"><ul class="space-y-2">
                     `;
 
                     vRecs.forEach(rec => {
-                        if (rec.isNewHireMarker || rec.isInterOffice) {
+                        if (rec.isPhaseChanger) {
                             let iconClass = rec.isNewHireMarker ? "fa-seedling text-emerald-400" : "fa-flag text-blue-400";
                             let badgeClass = rec.isNewHireMarker ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-blue-50 text-blue-700 border-blue-200";
                             let dateClass = rec.isNewHireMarker ? "text-emerald-700" : "text-blue-700";
                             let labelClass = rec.isNewHireMarker ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700";
-                            let badgeText = rec.isNewHireMarker ? "(최초 임용 기점)" : "(교육청 발령 기점)";
-
+                            let badgeText = rec.isNewHireMarker ? "(최초 임용 기점)" : "(지역 이동 기점)";
                             let dateDisplay = rec.startDate;
                             if (rec.startDate !== rec.endDate && rec.endDate !== "9999-99-99") {
-                                const recYMD = calcPeriodYMD(rec.startDate, rec.endDate);
-                                const recPeriodStr = formatYMDObj(recYMD);
-                                dateDisplay = `${rec.startDate} ~ ${rec.endDate} <span class="text-xs bg-white px-1.5 py-0.5 rounded shadow-sm border border-emerald-100 ml-1 text-slate-600 font-semibold">(${recPeriodStr})</span>`;
+                                dateDisplay = `${rec.startDate} ~ ${rec.endDate} <span class="text-xs bg-white px-1.5 py-0.5 rounded shadow-sm border border-emerald-100 ml-1 text-slate-600 font-semibold">(${formatYMDObj(calcPeriodYMD(rec.startDate, rec.endDate))})</span>`;
                             }
-
-                            resultHtml += `
-                            <li class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
-                                <div class="flex items-center gap-4 mb-2 sm:mb-0">
-                                    <div class="w-6 flex justify-center"><i class="fa-solid ${iconClass}"></i></div>
-                                    <div>
-                                        <span class="inline-block px-2.5 py-0.5 text-xs font-bold rounded-md border ${badgeClass} mr-2 shadow-sm">
-                                            ${rec.typeRaw}
-                                        </span>
-                                        <span class="text-sm font-medium text-gray-800">${rec.deptRaw}</span>
-                                    </div>
-                                </div>
-                                <div class="text-sm text-gray-500 flex flex-wrap items-center gap-2 sm:min-w-[280px] justify-end font-medium">
-                                    <span class="${dateClass} font-bold">${dateDisplay}</span>
-                                    <span class="text-xs ${labelClass} px-2 py-0.5 rounded-lg font-bold shadow-sm">${badgeText}</span>
-                                </div>
-                            </li>`;
+                            resultHtml += `<li class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100"><div class="flex items-center gap-4 mb-2 sm:mb-0"><div class="w-6 flex justify-center"><i class="fa-solid ${iconClass}"></i></div><div><span class="inline-block px-2.5 py-0.5 text-xs font-bold rounded-md border ${badgeClass} mr-2 shadow-sm">${rec.typeRaw}</span><span class="text-sm font-medium text-gray-800">${rec.deptRaw}</span></div></div><div class="text-sm text-gray-500 flex flex-wrap items-center gap-2 sm:min-w-[280px] justify-end font-medium"><span class="${dateClass} font-bold">${dateDisplay}</span><span class="text-xs ${labelClass} px-2 py-0.5 rounded-lg font-bold shadow-sm">${badgeText}</span></div></li>`;
                             return; 
                         }
 
@@ -1155,61 +955,33 @@
                         if (rec.category === 'MARKER') { badge = "bg-orange-50 text-orange-600 border-orange-200"; icon = "fa-briefcase text-orange-400"; }
                         if (rec.category === 'EXCLUSION') { badge = "bg-red-50 text-red-600 border-red-200"; text = "text-red-600 line-through opacity-70"; icon = "fa-ban text-red-400"; isExc = true; }
 
-                        let rYMD = calcPeriodYMD(rec.startDate, rec.endDate);
-                        let rPeriod = formatYMDObj(rYMD);
-
                         resultHtml += `
                             <li class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
-                                <div class="flex items-center gap-4 mb-2 sm:mb-0">
-                                    <div class="w-6 flex justify-center"><i class="fa-solid ${icon}"></i></div>
-                                    <div>
-                                        <span class="inline-block px-2.5 py-0.5 text-xs font-bold rounded-md border ${badge} mr-2 shadow-sm">
-                                            ${rec.typeRaw}
-                                        </span>
-                                        <span class="text-sm font-medium ${text}">${rec.deptRaw}</span>
-                                    </div>
-                                </div>
-                                <div class="text-sm text-slate-500 flex flex-wrap items-center gap-2 sm:min-w-[280px] justify-end font-medium">
-                                    <span>${rec.startDate} ~ ${rec.endDate}</span>
-                                    <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-bold ${isExc?'text-red-500':''} border border-slate-200">(${rPeriod})</span>
-                                </div>
-                            </li>
-                        `;
+                                <div class="flex items-center gap-4 mb-2 sm:mb-0"><div class="w-6 flex justify-center"><i class="fa-solid ${icon}"></i></div><div><span class="inline-block px-2.5 py-0.5 text-xs font-bold rounded-md border ${badge} mr-2 shadow-sm">${rec.typeRaw}</span><span class="text-sm font-medium ${text}">${rec.deptRaw}</span></div></div>
+                                <div class="text-sm text-slate-500 flex flex-wrap items-center gap-2 sm:min-w-[280px] justify-end font-medium"><span>${rec.startDate} ~ ${rec.endDate}</span><span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-bold ${isExc?'text-red-500':''} border border-slate-200">(${formatYMDObj(calcPeriodYMD(rec.startDate, rec.endDate))})</span></div>
+                            </li>`;
                     });
-
                     resultHtml += `</ul></div></div></div>`;
                 });
                 resultHtml += `</div></div>`;
             });
 
             // 총합 표시
-            const finalHtml = `
-            <div class="glass-panel rounded-3xl p-6 sm:p-8 border-t-4 border-t-indigo-500 shadow-lg relative overflow-hidden group">
-                <div class="absolute -right-10 -top-10 text-indigo-50/50 transform rotate-12 transition-transform group-hover:rotate-45 duration-700">
-                    <i class="fa-solid fa-trophy text-9xl"></i>
-                </div>
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('resultContainer').innerHTML = `
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 border-t-4 border-t-indigo-500 shadow-lg relative overflow-hidden group mb-8">
+                <div class="absolute -right-10 -top-10 text-indigo-50/50 transform rotate-12 transition-transform group-hover:rotate-45 duration-700"><i class="fa-solid fa-trophy text-9xl"></i></div>
                 <div class="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div class="flex items-center gap-4">
-                        <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-inner text-white text-2xl">
-                            <i class="fa-solid fa-award"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm text-slate-500 font-bold uppercase tracking-wider mb-1">총 인정 실근무경력</p>
-                            <h2 class="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">분석 완료</h2>
-                        </div>
+                        <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-inner text-white text-2xl"><i class="fa-solid fa-award"></i></div>
+                        <div><p class="text-sm text-slate-500 font-bold uppercase tracking-wider mb-1">총 인정 실근무경력</p><h2 class="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">분석 완료</h2></div>
                     </div>
                     <div class="bg-indigo-50 px-6 sm:px-8 py-4 sm:py-5 rounded-2xl border border-indigo-100 text-center shadow-sm">
-                        <p class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 drop-shadow-sm">
-                            ${formatYMDObj(globalTotalYMD)}
-                        </p>
+                        <p class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 drop-shadow-sm">${formatYMDObj(globalTotalYMD)}</p>
                         <p class="text-sm font-bold text-indigo-400 mt-1">나이스 공식 역산법 적용 (총 환산 ${periodToDays(globalTotalYMD)}일)</p>
                     </div>
                 </div>
-            </div>
-            ` + resultHtml;
-
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('resultContainer').innerHTML = finalHtml;
+            </div>` + resultHtml;
             document.getElementById('resultContainer').classList.remove('hidden');
 
         } catch (error) {
