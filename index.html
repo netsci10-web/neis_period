@@ -352,6 +352,7 @@
                     }
                 }
 
+                // [복구됨] 실수로 지워졌던 엑셀 실제 데이터(jsonRows) 파싱 및 교장/교감 필터링 로직 완벽 복구!
                 if (headerRowIndex === -1) throw new Error("파일 형식 오류: '임용구분'을 찾을 수 없습니다.");
 
                 const headers = rawDataArray[headerRowIndex].map(h => String(h || '').trim());
@@ -390,10 +391,12 @@
                     }
                 }
 
-                // 성명, 출생, 호봉 추출
+                // 성명, 출생, 호봉 추출 (모바일 환경의 특수 파일명 및 엑셀 병합셀 대응을 위해 추출 로직 대폭 강화)
                 let name = "성명 미상", nameFound = false, birthDate = "", payGrade = "";
                 let flatTexts = [];
-                for (let i = 0; i < Math.min(rawDataArray.length, 15); i++) {
+                
+                // 숨겨진 병합 셀이 많을 수 있으므로 탐색 범위를 30줄로 확장
+                for (let i = 0; i < Math.min(rawDataArray.length, 30); i++) {
                     for (let j = 0; j < rawDataArray[i].length; j++) {
                         let val = String(rawDataArray[i][j] || '').trim();
                         if (val) flatTexts.push(val);
@@ -402,38 +405,59 @@
 
                 for (let idx = 0; idx < flatTexts.length; idx++) {
                     let cellNoSpace = flatTexts[idx].replace(/\s+/g, '');
+                    
                     if (!nameFound && cellNoSpace.includes('성명')) {
-                        let inline = cellNoSpace.replace(/성명(?:한글|한자|영문)?[:：\|]?/g, '').replace(/\([^)]*\)/g, '').replace(/[^\uAC00-\uD7A3]/g, '');
-                        if (inline.length >= 2 && inline.length <= 5 && !/주민|번호|생년|기록/.test(inline)) { name = inline; nameFound = true; }
-                        else {
-                            for (let next = 1; next <= 3 && (idx + next) < flatTexts.length; next++) {
-                                let nextCellClean = flatTexts[idx + next].replace(/성명|한글|한자|영문/g, '').replace(/\([^)]*\)/g, '').replace(/[^\uAC00-\uD7A3]/g, '');
-                                if (nextCellClean.length >= 2 && nextCellClean.length <= 5 && !/주민|번호|생년|사진|성별|기록|인사/.test(nextCellClean)) { name = nextCellClean; nameFound = true; break; }
+                        // 1. 같은 셀 안에 이름이 포함된 경우 (예: "성명: 홍길동")
+                        let inlineText = cellNoSpace.replace(/성명(?:한글|한자|영문)?/g, '').replace(/[:：\|]/g, '');
+                        let inlineMatch = inlineText.match(/[가-힣]{2,5}/);
+                        if (inlineMatch && !/주민|번호|생년|기록|인사|성별|교육|발령/.test(inlineMatch[0])) {
+                            name = inlineMatch[0]; 
+                            nameFound = true; 
+                        } else {
+                            // 2. 다음 셀들에 이름이 있는 경우 (모바일 파싱 시 병합 셀이 여러 칸으로 쪼개질 수 있으므로 10칸까지 넓게 탐색)
+                            for (let next = 1; next <= 10 && (idx + next) < flatTexts.length; next++) {
+                                let nextText = flatTexts[idx + next].replace(/\s+/g, '');
+                                let nextMatch = nextText.match(/[가-힣]{2,5}/);
+                                // 이름이 아닌 다른 행정 단어들을 꼼꼼하게 필터링
+                                if (nextMatch && !/주민|번호|생년|사진|성별|기록|인사|초등|학교|교사|성명|한글|교육|지원|도교|발령|일자|기간|소속|직위|직급/.test(nextMatch[0])) { 
+                                    name = nextMatch[0]; 
+                                    nameFound = true; 
+                                    break; 
+                                }
                             }
                         }
                     }
                     if (!birthDate && (cellNoSpace.includes('생년월일') || cellNoSpace.includes('주민번호'))) {
                         let inlineMatch = cellNoSpace.match(/(\d{2,4})[./-]?(\d{2})[./-]?(\d{2})/);
-                        if (inlineMatch && inlineMatch[0].length >= 6) birthDate = inlineMatch[1].slice(-2) + "." + inlineMatch[2] + "." + inlineMatch[3];
-                        else {
-                            for (let next = 1; next <= 3 && (idx + next) < flatTexts.length; next++) {
+                        if (inlineMatch && inlineMatch[0].length >= 6) {
+                            birthDate = inlineMatch[1].slice(-2) + "." + inlineMatch[2] + "." + inlineMatch[3];
+                        } else {
+                            for (let next = 1; next <= 10 && (idx + next) < flatTexts.length; next++) {
                                 let nextMatch = flatTexts[idx + next].replace(/\s+/g, '').match(/(\d{2,4})[./-]?(\d{2})[./-]?(\d{2})/);
-                                if (nextMatch && nextMatch[0].length >= 6) { birthDate = nextMatch[1].slice(-2) + "." + nextMatch[2] + "." + nextMatch[3]; break; }
+                                if (nextMatch && nextMatch[0].length >= 6) { 
+                                    birthDate = nextMatch[1].slice(-2) + "." + nextMatch[2] + "." + nextMatch[3]; 
+                                    break; 
+                                }
                             }
                         }
                     }
                     if (!payGrade && cellNoSpace.includes('호봉')) {
                         let inlineMatch = cellNoSpace.match(/(\d+)호봉/);
-                        if (inlineMatch) payGrade = inlineMatch[1] + "호봉";
-                        else {
-                            for (let next = 1; next <= 3 && (idx + next) < flatTexts.length; next++) {
+                        if (inlineMatch) {
+                            payGrade = inlineMatch[1] + "호봉";
+                        } else {
+                            for (let next = 1; next <= 10 && (idx + next) < flatTexts.length; next++) {
                                 let nextMatch = flatTexts[idx + next].replace(/\s+/g, '').match(/(\d+)(?:호봉)?/);
-                                if (nextMatch && parseInt(nextMatch[1]) > 0 && parseInt(nextMatch[1]) <= 50) { payGrade = nextMatch[1] + "호봉"; break; }
+                                if (nextMatch && parseInt(nextMatch[1]) > 0 && parseInt(nextMatch[1]) <= 50) { 
+                                    payGrade = nextMatch[1] + "호봉"; 
+                                    break; 
+                                }
                             }
                         }
                     }
                 }
 
+                // 3. 파일명에서 추출하는 최후의 보루 (모바일에서는 파일명이 'Document.xls' 등으로 변환되는 경우가 많아 위 1, 2번 로직이 매우 중요함)
                 if (!nameFound || name === "성명 미상") {
                     let match = file.name.replace(/\.[^/.]+$/, "").replace(/인사기록|임용발령|전체|카드|다운로드|복사본|[\d\s_\-\(\)\[\]]/g, '').match(/^[가-힣]{2,5}$/);
                     if (match && !/주민|번호|성명/.test(match[0])) { name = match[0]; nameFound = true; }
