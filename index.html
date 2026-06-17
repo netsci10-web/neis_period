@@ -34,14 +34,15 @@
         <div class="glass-panel rounded-3xl p-6 sm:p-8 mb-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- File Upload -->
-                <div>
+                <div class="flex flex-col h-full">
                     <div class="flex justify-between items-center mb-2">
                         <label class="block text-sm font-bold text-slate-700">인사기록(임용발령(전체)) 파일 업로드</label>
                         <button onclick="document.getElementById('guideModal').classList.remove('hidden')" class="text-xs text-indigo-500 hover:text-indigo-700 font-bold bg-indigo-50 px-2 py-1 rounded">
                             <i class="fa-solid fa-circle-question mr-1"></i>다운로드 방법
                         </button>
                     </div>
-                    <div id="dropzone" class="relative border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-indigo-400 hover:bg-indigo-50/50 transition-all cursor-pointer group">
+                    <!-- 높이를 우측 폼과 맞추기 위해 flex-1 및 min-h 추가 -->
+                    <div id="dropzone" class="flex-1 relative border-2 border-dashed border-slate-300 rounded-2xl p-6 flex flex-col justify-center items-center text-center hover:border-indigo-400 hover:bg-indigo-50/50 transition-all cursor-pointer group min-h-[120px]">
                         <input type="file" id="fileInput" accept=".xls,.xlsx" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
                         <div class="space-y-2 pointer-events-none">
                             <i class="fa-solid fa-file-excel text-3xl text-slate-400 group-hover:text-indigo-400 transition-colors"></i>
@@ -52,12 +53,33 @@
                 </div>
 
                 <!-- Settings -->
-                <div class="flex flex-col justify-between">
+                <div class="flex flex-col justify-between h-full gap-3">
+                    <!-- 기준일 설정 (오늘, 학년도 마지막 버튼 포함) -->
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">기준일 설정</label>
-                        <input type="date" id="refDate" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-3.5 shadow-sm transition-shadow">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-sm font-bold text-slate-700">기준일 설정</label>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="setToday()" class="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-800 font-bold px-2.5 py-1 rounded-lg border border-indigo-200 transition-colors shadow-sm flex items-center">
+                                    <i class="fa-solid fa-calendar-day mr-1.5"></i>오늘
+                                </button>
+                                <button type="button" onclick="setEndOfAcademicYear()" class="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-800 font-bold px-2.5 py-1 rounded-lg border border-indigo-200 transition-colors shadow-sm flex items-center">
+                                    <i class="fa-regular fa-calendar-check mr-1.5"></i>학년도 마지막
+                                </button>
+                            </div>
+                        </div>
+                        <input type="date" id="refDate" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-3 shadow-sm transition-shadow">
                     </div>
-                    <button id="calcBtn" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm px-5 py-4 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                    
+                    <!-- 정렬 순서 -->
+                    <div>
+                        <label for="sortOrder" class="block text-sm font-bold text-slate-700 mb-2">정렬 순서</label>
+                        <select id="sortOrder" onchange="if(currentJsonData) document.getElementById('calcBtn').click()" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-3 shadow-sm font-bold cursor-pointer hover:bg-slate-100 transition-colors outline-none">
+                            <option value="desc">최신순</option>
+                            <option value="asc">과거순</option>
+                        </select>
+                    </div>
+
+                    <button id="calcBtn" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm px-5 py-3.5 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
                         <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>실근무경력 분석하기
                     </button>
                 </div>
@@ -115,6 +137,42 @@
 <script>
     document.getElementById('refDate').value = new Date().toISOString().split('T')[0];
     let currentJsonData = null;
+    let globalSchoolRegionCache = {}; // 정렬 변경 시 즉시 로딩을 위한 글로벌 캐시
+    let globalSchoolSubRegionMap = {}; 
+
+    // [업데이트] 오늘 날짜 자동 설정 로직
+    function setToday() {
+        document.getElementById('refDate').value = new Date().toISOString().split('T')[0];
+        
+        // 엑셀이 로드된 상태에서 버튼을 누르면 즉시 재계산까지 실행
+        if(currentJsonData) {
+            document.getElementById('calcBtn').click();
+        }
+    }
+
+    // [업데이트] 당해 학년도 말일(2월 28일 또는 29일) 자동 계산 로직
+    function setEndOfAcademicYear() {
+        const today = new Date();
+        let year = today.getFullYear();
+        let month = today.getMonth() + 1;
+        
+        // 1, 2월인 경우 이전 해에 시작한 학년도의 연장선이므로 올해 2월이 학년도말. 3~12월은 내년 2월이 학년도말.
+        let targetYear = (month <= 2) ? year : year + 1;
+        
+        // targetYear의 3월 1일에서 하루를 빼면 완벽한 2월의 마지막 날(윤년 포함)이 나옵니다.
+        let lastDayOfFeb = new Date(targetYear, 2, 0); 
+        
+        let yyyy = lastDayOfFeb.getFullYear();
+        let mm = String(lastDayOfFeb.getMonth() + 1).padStart(2, '0');
+        let dd = String(lastDayOfFeb.getDate()).padStart(2, '0');
+        
+        document.getElementById('refDate').value = `${yyyy}-${mm}-${dd}`;
+        
+        // 엑셀이 로드된 상태에서 버튼을 누르면 즉시 재계산까지 실행
+        if(currentJsonData) {
+            document.getElementById('calcBtn').click();
+        }
+    }
 
     // [핵심 1] 완벽한 관공서 역산법 (DATEDIF 100% 동기화)
     function calcPeriodYMD(startStr, endStr) {
@@ -819,20 +877,36 @@
                 row.phaseId = currentPhase.id;
             });
 
-            // 출력용 최종 역순 정렬
+            // [업데이트] 출력용 최종 정렬 (화면에 드롭다운이 없더라도 에러가 나지 않도록 방어 코드 추가)
+            const sortOrderElem = document.getElementById('sortOrder');
+            const sortOrder = sortOrderElem ? sortOrderElem.value : 'desc';
+            
             validRows.sort((a, b) => {
-                let diff = new Date(b.startDate) - new Date(a.startDate);
-                if(diff === 0) {
-                    if (a.isNewHireMarker && !b.isNewHireMarker) return 1; 
-                    if (!a.isNewHireMarker && b.isNewHireMarker) return -1;
-                    if (a.isPhaseChanger && !b.isPhaseChanger) return 1; 
-                    if (!a.isPhaseChanger && b.isPhaseChanger) return -1;
-
-                    if (b.phaseId !== a.phaseId) return b.phaseId - a.phaseId; 
-                    const getCatOrder = cat => ({ 'HIDDEN_WORK': 1, 'MARKER': 2, 'WORK': 3, 'EXCLUSION': 4 })[cat] || 5;
-                    return getCatOrder(b.category) - getCatOrder(a.category);
+                if (sortOrder === 'desc') {
+                    let diff = new Date(b.startDate) - new Date(a.startDate);
+                    if(diff === 0) {
+                        if (a.isNewHireMarker && !b.isNewHireMarker) return 1; 
+                        if (!a.isNewHireMarker && b.isNewHireMarker) return -1;
+                        if (a.isPhaseChanger && !b.isPhaseChanger) return 1; 
+                        if (!a.isPhaseChanger && b.isPhaseChanger) return -1;
+                        if (b.phaseId !== a.phaseId) return b.phaseId - a.phaseId; 
+                        const getCatOrder = cat => ({ 'HIDDEN_WORK': 1, 'MARKER': 2, 'WORK': 3, 'EXCLUSION': 4 })[cat] || 5;
+                        return getCatOrder(b.category) - getCatOrder(a.category);
+                    }
+                    return diff;
+                } else {
+                    let diff = new Date(a.startDate) - new Date(b.startDate); // 과거순 정렬
+                    if(diff === 0) {
+                        if (a.isNewHireMarker && !b.isNewHireMarker) return -1; 
+                        if (!a.isNewHireMarker && b.isNewHireMarker) return 1;
+                        if (a.isPhaseChanger && !b.isPhaseChanger) return -1; 
+                        if (!a.isPhaseChanger && b.isPhaseChanger) return 1;
+                        if (a.phaseId !== b.phaseId) return a.phaseId - b.phaseId; 
+                        const getCatOrder = cat => ({ 'HIDDEN_WORK': 1, 'MARKER': 2, 'WORK': 3, 'EXCLUSION': 4 })[cat] || 5;
+                        return getCatOrder(a.category) - getCatOrder(b.category);
+                    }
+                    return diff;
                 }
-                return diff;
             });
 
             let currentBlock = null;
@@ -850,7 +924,9 @@
 
             let globalTotalYMD = {y:0, m:0, d:0};
             let resultHtml = '';
-            phases.reverse(); // 화면 표출 시 최신 구역이 가장 위로 오게 정렬
+            
+            // 최신순일 경우 구역(Phase)도 뒤집어줍니다.
+            if (sortOrder === 'desc') phases.reverse(); 
             
             // UI 렌더링부
             phases.forEach(section => {
@@ -882,22 +958,22 @@
                 }));
 
                 resultHtml += `
-                <div class="relative pl-8 sm:pl-12 mb-10 group">
+                <div class="relative pl-6 sm:pl-10 mb-6 group">
                     <div class="timeline-line group-last:bg-gradient-to-b group-last:from-slate-200 group-last:to-transparent"></div>
-                    <div class="relative z-10 glass-panel rounded-2xl p-4 sm:p-6 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-l-indigo-500 shadow-sm transition-shadow hover:shadow-md">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-inner"><i class="fa-solid fa-map-location-dot text-white text-xl"></i></div>
+                    <div class="relative z-10 glass-panel rounded-xl p-3 sm:p-4 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-l-4 border-l-indigo-500 shadow-sm transition-shadow hover:shadow-md">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center shadow-inner"><i class="fa-solid fa-map-location-dot text-white text-lg"></i></div>
                             <div>
-                                <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">${section.region} <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center shadow-sm"><i class="fa-solid fa-layer-group mr-1"></i> 초등교사 구간</span></h2>
-                                <p class="text-sm text-slate-500 font-medium mt-1 flex items-center"><i class="fa-regular fa-calendar text-slate-400 mr-1.5"></i> ${secStart} ~ ${secEnd}</p>
+                                <h2 class="text-lg font-black text-slate-900 flex items-center gap-2">${section.region} <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center shadow-sm"><i class="fa-solid fa-layer-group mr-1"></i> 초등교사 구간</span></h2>
+                                <p class="text-xs text-slate-500 font-medium mt-0.5 flex items-center"><i class="fa-regular fa-calendar text-slate-400 mr-1.5"></i> ${secStart} ~ ${secEnd}</p>
                             </div>
                         </div>
-                        <div class="bg-slate-50 px-5 py-3 rounded-xl border border-slate-100 text-right min-w-[160px] shadow-sm">
+                        <div class="bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 text-right min-w-[140px] shadow-sm">
                             <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">지역 합산 인정기간</p>
-                            <p class="text-lg font-black text-indigo-700">${formatYMDObj(sPeriodYMD)} <span class="text-sm text-slate-400 font-semibold ml-1">(${periodToDays(sPeriodYMD)}일)</span></p>
+                            <p class="text-base font-black text-indigo-700">${formatYMDObj(sPeriodYMD)} <span class="text-xs text-slate-400 font-semibold ml-1">(${periodToDays(sPeriodYMD)}일)</span></p>
                         </div>
                     </div>
-                    <div class="space-y-6">
+                    <div class="space-y-3">
                 `;
 
                 section.blocks.forEach(block => {
@@ -916,24 +992,26 @@
                     
                     let bgClass = block.isKinder ? "bg-amber-50/50 border-amber-200" : "bg-white border-slate-200";
                     let titleClass = block.isKinder ? "text-amber-900" : "text-slate-900";
-                    let dotClass = block.isKinder ? "border-amber-400 bg-amber-100" : "border-indigo-400 bg-indigo-50";
+                    let dotBorder = block.isKinder ? "border-amber-500" : "border-indigo-500";
 
                     resultHtml += `
                     <div class="relative">
-                        <div class="timeline-dot ${dotClass}"></div>
-                        <div class="glass-panel rounded-2xl overflow-hidden border ${bgClass} transition-shadow hover:shadow-md">
-                            <div class="border-b border-slate-100/80 px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/50">
-                                <div>
-                                    <h3 class="text-lg font-extrabold ${titleClass} flex items-center gap-2">${block.school} ${block.isKinder ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md border border-amber-200 font-bold shadow-sm">병설유치원 (합산제외)</span>' : ''}</h3>
-                                    <p class="text-sm text-slate-500 font-medium mt-0.5 flex items-center"><i class="fa-regular fa-clock text-slate-400 mr-1.5"></i> ${bStart} ~ ${bEnd}</p>
+                        <div class="glass-panel rounded-xl overflow-hidden border ${bgClass} transition-shadow hover:shadow-md">
+                            <div class="border-b border-slate-100/80 px-3 sm:px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/50">
+                                <div class="flex items-start gap-2.5">
+                                    <div class="w-3 h-3 mt-1.5 rounded-full border-2 ${dotBorder} bg-white shadow-sm shrink-0"></div>
+                                    <div>
+                                        <h3 class="text-base font-extrabold ${titleClass} flex items-center gap-2">${block.school} ${block.isKinder ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200 font-bold shadow-sm">병설유치원 (합산제외)</span>' : ''}</h3>
+                                        <p class="text-xs text-slate-500 font-medium mt-0.5 flex items-center"><i class="fa-regular fa-clock text-slate-400 mr-1.5"></i> ${bStart} ~ ${bEnd}</p>
+                                    </div>
                                 </div>
                                 ${!block.isKinder ? `
-                                <div class="text-right">
-                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">실근무 계산 (나이스 역산법)</p>
-                                    <span class="inline-flex items-baseline px-3 py-1 rounded-lg bg-blue-50 border border-blue-100 shadow-sm"><span class="text-blue-700 font-black text-sm">${formatYMDObj(bPeriodYMD)}</span><span class="text-blue-400 text-xs font-semibold ml-1.5">(${periodToDays(bPeriodYMD)}일)</span></span>
+                                <div class="text-right mt-1 sm:mt-0 pl-5 sm:pl-0">
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">실근무 계산</p>
+                                    <span class="inline-flex items-baseline px-2.5 py-0.5 rounded bg-blue-50 border border-blue-100 shadow-sm"><span class="text-blue-700 font-black text-[13px]">${formatYMDObj(bPeriodYMD)}</span><span class="text-blue-400 text-[10px] font-semibold ml-1.5">(${periodToDays(bPeriodYMD)}일)</span></span>
                                 </div>` : ''}
                             </div>
-                            <div class="p-4 sm:p-6"><ul class="space-y-2">
+                            <div class="p-3 sm:p-4"><ul class="space-y-1">
                     `;
 
                     vRecs.forEach(rec => {
@@ -942,12 +1020,12 @@
                             let badgeClass = rec.isNewHireMarker ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-blue-50 text-blue-700 border-blue-200";
                             let dateClass = rec.isNewHireMarker ? "text-emerald-700" : "text-blue-700";
                             let labelClass = rec.isNewHireMarker ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700";
-                            let badgeText = rec.isNewHireMarker ? "(최초 임용 기점)" : "(지역 이동 기점)";
+                            let badgeText = rec.isNewHireMarker ? "(최초 임용)" : "(지역 이동)";
                             let dateDisplay = rec.startDate;
                             if (rec.startDate !== rec.endDate && rec.endDate !== "9999-99-99") {
-                                dateDisplay = `${rec.startDate} ~ ${rec.endDate} <span class="text-xs bg-white px-1.5 py-0.5 rounded shadow-sm border border-emerald-100 ml-1 text-slate-600 font-semibold">(${formatYMDObj(calcPeriodYMD(rec.startDate, rec.endDate))})</span>`;
+                                dateDisplay = `${rec.startDate} ~ ${rec.endDate} <span class="text-[10px] bg-white px-1 py-0.5 rounded shadow-sm border border-emerald-100 ml-1 text-slate-600 font-semibold">(${formatYMDObj(calcPeriodYMD(rec.startDate, rec.endDate))})</span>`;
                             }
-                            resultHtml += `<li class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100"><div class="flex items-center gap-4 mb-2 sm:mb-0"><div class="w-6 flex justify-center"><i class="fa-solid ${iconClass}"></i></div><div><span class="inline-block px-2.5 py-0.5 text-xs font-bold rounded-md border ${badgeClass} mr-2 shadow-sm">${rec.typeRaw}</span><span class="text-sm font-medium text-gray-800">${rec.deptRaw}</span></div></div><div class="text-sm text-gray-500 flex flex-wrap items-center gap-2 sm:min-w-[280px] justify-end font-medium"><span class="${dateClass} font-bold">${dateDisplay}</span><span class="text-xs ${labelClass} px-2 py-0.5 rounded-lg font-bold shadow-sm">${badgeText}</span></div></li>`;
+                            resultHtml += `<li class="flex flex-col sm:flex-row sm:items-center justify-between p-2 sm:p-2.5 rounded-lg hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100"><div class="flex items-center gap-3 mb-1 sm:mb-0"><div class="w-5 flex justify-center"><i class="fa-solid ${iconClass} text-sm"></i></div><div><span class="inline-block px-2 py-0.5 text-[11px] font-bold rounded border ${badgeClass} mr-2 shadow-sm">${rec.typeRaw}</span><span class="text-[13px] font-medium text-gray-800">${rec.deptRaw}</span></div></div><div class="text-[12px] text-gray-500 flex flex-wrap items-center gap-1.5 sm:min-w-[240px] justify-end font-medium"><span class="${dateClass} font-bold">${dateDisplay}</span><span class="text-[10px] ${labelClass} px-1.5 py-0.5 rounded font-bold shadow-sm">${badgeText}</span></div></li>`;
                             return; 
                         }
 
@@ -956,9 +1034,9 @@
                         if (rec.category === 'EXCLUSION') { badge = "bg-red-50 text-red-600 border-red-200"; text = "text-red-600 line-through opacity-70"; icon = "fa-ban text-red-400"; isExc = true; }
 
                         resultHtml += `
-                            <li class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
-                                <div class="flex items-center gap-4 mb-2 sm:mb-0"><div class="w-6 flex justify-center"><i class="fa-solid ${icon}"></i></div><div><span class="inline-block px-2.5 py-0.5 text-xs font-bold rounded-md border ${badge} mr-2 shadow-sm">${rec.typeRaw}</span><span class="text-sm font-medium ${text}">${rec.deptRaw}</span></div></div>
-                                <div class="text-sm text-slate-500 flex flex-wrap items-center gap-2 sm:min-w-[280px] justify-end font-medium"><span>${rec.startDate} ~ ${rec.endDate}</span><span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-bold ${isExc?'text-red-500':''} border border-slate-200">(${formatYMDObj(calcPeriodYMD(rec.startDate, rec.endDate))})</span></div>
+                            <li class="flex flex-col sm:flex-row sm:items-center justify-between p-2 sm:p-2.5 rounded-lg hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
+                                <div class="flex items-center gap-3 mb-1 sm:mb-0"><div class="w-5 flex justify-center"><i class="fa-solid ${icon} text-sm"></i></div><div><span class="inline-block px-2 py-0.5 text-[11px] font-bold rounded border ${badge} mr-2 shadow-sm">${rec.typeRaw}</span><span class="text-[13px] font-medium ${text}">${rec.deptRaw}</span></div></div>
+                                <div class="text-[12px] text-slate-500 flex flex-wrap items-center gap-1.5 sm:min-w-[240px] justify-end font-medium"><span>${rec.startDate} ~ ${rec.endDate}</span><span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-bold ${isExc?'text-red-500':''} border border-slate-200">(${formatYMDObj(calcPeriodYMD(rec.startDate, rec.endDate))})</span></div>
                             </li>`;
                     });
                     resultHtml += `</ul></div></div></div>`;
@@ -969,16 +1047,16 @@
             // 총합 표시
             document.getElementById('loading').classList.add('hidden');
             document.getElementById('resultContainer').innerHTML = `
-            <div class="glass-panel rounded-3xl p-6 sm:p-8 border-t-4 border-t-indigo-500 shadow-lg relative overflow-hidden group mb-8">
-                <div class="absolute -right-10 -top-10 text-indigo-50/50 transform rotate-12 transition-transform group-hover:rotate-45 duration-700"><i class="fa-solid fa-trophy text-9xl"></i></div>
-                <div class="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div class="glass-panel rounded-2xl p-5 sm:p-6 border-t-4 border-t-indigo-500 shadow-lg relative overflow-hidden group mb-6">
+                <div class="absolute -right-10 -top-10 text-indigo-50/50 transform rotate-12 transition-transform group-hover:rotate-45 duration-700"><i class="fa-solid fa-trophy text-8xl"></i></div>
+                <div class="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div class="flex items-center gap-4">
-                        <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-inner text-white text-2xl"><i class="fa-solid fa-award"></i></div>
-                        <div><p class="text-sm text-slate-500 font-bold uppercase tracking-wider mb-1">총 인정 실근무경력</p><h2 class="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">분석 완료</h2></div>
+                        <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-inner text-white text-xl"><i class="fa-solid fa-award"></i></div>
+                        <div><p class="text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">총 인정 실근무경력</p><h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-tight">분석 완료</h2></div>
                     </div>
-                    <div class="bg-indigo-50 px-6 sm:px-8 py-4 sm:py-5 rounded-2xl border border-indigo-100 text-center shadow-sm">
-                        <p class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 drop-shadow-sm">${formatYMDObj(globalTotalYMD)}</p>
-                        <p class="text-sm font-bold text-indigo-400 mt-1">나이스 공식 역산법 적용 (총 환산 ${periodToDays(globalTotalYMD)}일)</p>
+                    <div class="bg-indigo-50 px-5 sm:px-6 py-3 rounded-xl border border-indigo-100 text-center shadow-sm">
+                        <p class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 drop-shadow-sm">${formatYMDObj(globalTotalYMD)}</p>
+                        <p class="text-[11px] font-bold text-indigo-400 mt-0.5">나이스 공식 역산법 적용 (총 환산 ${periodToDays(globalTotalYMD)}일)</p>
                     </div>
                 </div>
             </div>` + resultHtml;
